@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Copo 15 Anos</title>
+<link rel="icon" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="style.css">
+<script>
+  (function () {
+    try { var t = localStorage.getItem('c15_theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+  })();
+</script>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<section id="login" class="login hidden" aria-label="Login">
+  <form id="loginForm" class="login-card" autocomplete="on">
+    <div class="login-logo"><img src="logo.png" alt="Espetto Carioca 15 anos" class="logo"></div>
+    <h1>Ação Copo 15 Anos</h1>
+    <p class="muted">Acesse o painel de monitoramento</p>
+    <label>Usuário
+      <input id="lgUser" name="username" autocomplete="username" required>
+    </label>
+    <label>Senha
+      <input id="lgPass" name="password" type="password" autocomplete="current-password" required>
+    </label>
+    <p id="lgErr" class="login-err" role="alert"></p>
+    <button type="submit" class="btn btn-primary btn-block" id="lgBtn">Entrar</button>
+  </form>
+</section>
+
+<!-- ============ APP ============ -->
+<div id="app" class="app hidden">
+  <aside id="sidebar" class="sidebar">
+    <div class="sb-head">
+      <img src="logo.png" alt="Espetto Carioca 15 anos" class="logo sb-logo">
+      <button class="icon-btn sb-close" id="sbClose" aria-label="Fechar filtros">✕</button>
+    </div>
+
+    <div class="sb-block">
+      <h3>Período</h3>
+      <div class="date-row">
+        <label>De<input type="date" id="fIni"></label>
+        <label>Até<input type="date" id="fFim"></label>
+      </div>
+      <div class="chips" id="quickDates">
+        <button class="chip" data-q="all">Toda a ação</button>
+        <button class="chip" data-q="yesterday">Ontem</button>
+        <button class="chip" data-q="7">Últ. 7 dias</button>
+        <button class="chip" data-q="week">Semana atual</button>
+      </div>
+    </div>
+
+    <div class="sb-block sb-grow">
+      <h3>Lojas <span class="muted" id="lojaCount"></span></h3>
+      <input type="search" id="lojaSearch" placeholder="Buscar loja…" class="search">
+      <div class="chips">
+        <button class="chip" id="lojaAll">Todas</button>
+        <button class="chip" id="lojaNone">Nenhuma</button>
+      </div>
+      <div id="lojaList" class="loja-list"></div>
+    </div>
+
+    <div class="sb-foot">
+      <button class="btn btn-primary btn-block" id="btnRefresh">
+        <span class="ico" id="refreshIco">⟳</span> Atualizar dados
+      </button>
+      <p class="upd muted" id="lastUpd">—</p>
+      <div class="sb-foot-row">
+        <button class="btn btn-ghost" id="btnTheme" aria-label="Alternar tema">◐ Tema</button>
+        <button class="btn btn-ghost" id="btnLogout">Sair</button>
+      </div>
+    </div>
+  </aside>
+  <div class="sb-backdrop" id="sbBackdrop"></div>
+
+  <main class="main">
+    <header class="topbar">
+      <button class="icon-btn sb-open" id="sbOpen" aria-label="Abrir filtros">☰</button>
+      <img src="logo.png" alt="Espetto Carioca 15 anos" class="logo top-logo">
+      <div class="top-title">
+        <h1>Ação Copo 15 Anos</h1>
+        <p class="muted">Comandas acima de <b id="limiteTxt">R$ 250,00</b> ganham o copo comemorativo · 15/10 a 30/11</p>
+      </div>
+      <div class="progress-wrap" title="Andamento da ação">
+        <div class="progress-lbl"><span id="progLbl">—</span></div>
+        <div class="progress"><div class="progress-bar" id="progBar"></div></div>
+      </div>
+    </header>
+
+    <div id="emptyBanner" class="banner hidden"></div>
+
+    <!-- KPIs -->
+    <section class="kpis">
+      <article class="kpi kpi-accent">
+        <span class="kpi-lbl">Comandas &gt; R$ 250</span>
+        <strong class="kpi-val" id="kC250">—</strong>
+        <span class="kpi-sub" id="kC250s">—</span>
+      </article>
+      <article class="kpi">
+        <span class="kpi-lbl">Copos utilizados</span>
+        <strong class="kpi-val" id="kCopos">—</strong>
+        <div class="mini-bar"><div id="kCoposBar"></div></div>
+        <span class="kpi-sub" id="kCoposS">—</span>
+      </article>
+      <article class="kpi">
+        <span class="kpi-lbl">Faturamento</span>
+        <strong class="kpi-val" id="kFat">—</strong>
+        <span class="kpi-sub" id="kFatS">—</span>
+      </article>
+      <article class="kpi">
+        <span class="kpi-lbl">Comandas</span>
+        <strong class="kpi-val" id="kCom">—</strong>
+        <span class="kpi-sub" id="kComS">—</span>
+      </article>
+      <article class="kpi">
+        <span class="kpi-lbl">Ticket médio</span>
+        <strong class="kpi-val" id="kTm">—</strong>
+        <span class="kpi-sub" id="kTmS">faturamento ÷ comandas</span>
+      </article>
+    </section>
+
+    <!-- Ranking -->
+    <section class="card">
+        <div class="card-head">
+          <h2>Ranking de lojas</h2>
+          <select id="rankBy" class="select" aria-label="Ordenar ranking por">
+            <option value="c250">Comandas &gt; R$ 250</option>
+            <option value="pct">% copos utilizados</option>
+            <option value="fat">Faturamento</option>
+            <option value="com">Comandas</option>
+            <option value="tm">Ticket médio</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table class="rank">
+            <thead>
+              <tr><th>#</th><th>Loja</th><th class="num">&gt; R$250</th><th class="pct-col">Copos</th><th class="num">Faturamento</th><th class="num">Comandas</th><th class="num">Ticket médio</th><th class="num">Saldo copos</th></tr>
+            </thead>
+            <tbody id="rankBody"></tbody>
+          </table>
+        </div>
+    </section>
+
+    <!-- Evolução + top produtos -->
+    <section class="grid-2">
+      <article class="card">
+        <div class="card-head">
+          <h2>Evolução diária</h2>
+          <div class="seg" id="evoSeg">
+            <button data-v="fat" class="on">Faturamento</button>
+            <button data-v="com">Comandas</button>
+            <button data-v="c250">&gt; R$250</button>
+          </div>
+        </div>
+        <div class="chart-box"><canvas id="chEvo"></canvas></div>
+      </article>
+
+      <article class="card">
+      <div class="card-head">
+        <h2>Top 10 produtos mais vendidos</h2>
+        <div class="seg" id="prodSeg">
+          <button data-v="q" class="on">Quantidade</button>
+          <button data-v="v">Valor</button>
+        </div>
+      </div>
+      <div class="chart-box"><canvas id="chProd"></canvas></div>
+      </article>
+    </section>
+
+    <!-- Mapa -->
+    <section class="card map-card">
+      <div class="card-head">
+        <h2>Mapa das lojas</h2>
+        <span class="muted small">Tamanho do círculo = comandas &gt; R$ 250 · cor = % de copos utilizados</span>
+      </div>
+      <div class="map-grid">
+        <div id="map" class="map"></div>
+        <div class="insights" id="insights">
+          <div class="ins-head">
+            <span class="muted small" id="insScope">Visão geral</span>
+            <h3 id="insTitle">Todas as lojas selecionadas</h3>
+            <span class="muted small" id="insCity"></span>
+          </div>
+          <div class="ins-grid">
+            <div class="ins ins-accent"><span>Comandas &gt; R$ 250</span><strong id="iC250">—</strong></div>
+            <div class="ins"><span>Faturamento</span><strong id="iFat">—</strong></div>
+            <div class="ins"><span>Ticket médio</span><strong id="iTm">—</strong></div>
+            <div class="ins"><span>Total de comandas</span><strong id="iCom">—</strong></div>
+          </div>
+          <div class="ins-copos">
+            <div class="ins-copos-row"><span>Copos utilizados</span><b id="iCopos">—</b></div>
+            <div class="mini-bar"><div id="iCoposBar"></div></div>
+          </div>
+          <button class="btn btn-ghost btn-block hidden" id="insReset">Ver todas as lojas</button>
+          <ul class="legend">
+            <li><i style="background:var(--ok)"></i>até 60% dos copos</li>
+            <li><i style="background:var(--warn)"></i>60% a 90%</li>
+            <li><i style="background:var(--bad)"></i>acima de 90%</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <footer class="foot muted small">Fonte: SQL Server (vw_faturamento_espetto_cupom, vw_faturamento_villa_lobos_cupom, prod_15_anos_espetto) · atualização automática diária às 14h</footer>
+  </main>
+</div>
+
+<div id="toast" class="toast" role="status"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

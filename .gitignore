@@ -1,0 +1,7 @@
+extrator/.env
+extrator/logs/
+__pycache__/
+node_modules/
+.vercel
+data/teste.json
+.claude/
