@@ -1,4 +1,4 @@
-# Executa dbo.sp_dashboard_copo15 e grava o JSON (coluna payload) em um arquivo UTF-8.
+﻿# Executa dbo.sp_dashboard_copo15 e grava o JSON (coluna payload) em um arquivo UTF-8.
 # Usa o SqlClient nativo do .NET (Windows PowerShell 5.1): não precisa de Python nem driver ODBC no runner.
 # Conexão: variáveis DB_SERVER, DB_USER, DB_PASSWORD (secrets do GitHub) e DB_DATABASE (padrão master).
 param(

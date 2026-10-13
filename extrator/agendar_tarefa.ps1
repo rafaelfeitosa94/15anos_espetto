@@ -1,4 +1,4 @@
-# Cria (ou recria) a tarefa agendada do Windows que atualiza o dashboard todo dia às 15:00.
+﻿# Cria (ou recria) a tarefa agendada do Windows que atualiza o dashboard todo dia às 15:00.
 # (fallback local: a atualização principal é o workflow do GitHub pelo gateway, no mesmo horário)
 # Executar no PowerShell:  powershell -ExecutionPolicy Bypass -File .\agendar_tarefa.ps1
 $ErrorActionPreference = 'Stop'

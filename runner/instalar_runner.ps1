@@ -1,4 +1,4 @@
-<#
+﻿<#
   Instala o runner do GitHub Actions no servidor da rede (SRVTESTE) como serviço do Windows.
   O runner só faz conexões de SAÍDA para o GitHub (HTTPS 443): nenhuma porta é aberta no servidor.
 
