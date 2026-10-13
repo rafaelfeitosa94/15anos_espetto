@@ -8,8 +8,8 @@
     'vendas'             comandas, faturamento e comandas acima do limite (todas as lojas)
     'produtos_espetto'   produtos das lojas Espetto
     'produtos_parceiros' produtos de Villa Lobos e Cabo Frio Collab
-  As tabelas de origem são heaps (sem índice), então cada parte faz varredura completa; as três partes
-  são chamadas em paralelo pelo dashboard/workflow.
+  As tabelas de origem têm índice em dataVenda (sql/indices_dataVenda.sql); OPTION (RECOMPILE) faz o
+  otimizador usar as datas reais e buscar pelo índice. As três partes são chamadas em paralelo.
 
   Regras (iguais às do extrator Python):
   - Espetto: comandas de bd_vendas_v3 (valor = valLiquido - valAcrescimo por comanda);
@@ -63,7 +63,7 @@ FROM bd_espetto_2025.dbo.bd_vendas_v3 v
 JOIN bd_espetto_2025.dbo.BD_LOJAS_DEGUST l ON l.id = v.codLoja
 WHERE v.cancelada = 'N' AND v.dataVenda >= @ini AND v.dataVenda < @fimx
 GROUP BY l.lojas, CAST(v.dataVenda AS date), v.tipoVenda, v.controle
-OPTION (MAX_GRANT_PERCENT = 5);
+OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
 
 -- Espetto: taxa de serviço (+) e cortesias (-) do dia
 INSERT #aj (loja, data, valor)
@@ -81,7 +81,7 @@ FROM (
 ) x
 JOIN bd_espetto_2025.dbo.BD_LOJAS_DEGUST l ON l.id = x.codLoja
 GROUP BY l.lojas, CAST(x.dataVenda AS date)
-OPTION (MAX_GRANT_PERCENT = 5);
+OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
 
 -- Villa Lobos: valor por comanda
 INSERT #com (loja, data, valor)
@@ -89,7 +89,7 @@ SELECT LOJA, DATA, SUM(VALOR)
 FROM master.dbo.vw_faturamento_villa_lobos_cupom
 WHERE DATA >= @inicio AND DATA <= @fim
 GROUP BY LOJA, DATA, COMANDAS
-OPTION (MAX_GRANT_PERCENT = 5);
+OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
 
 -- Cabo Frio Collab: valor por comanda (lógica da vw_faturamento_cabofrio_collab_cupom)
 INSERT #com (loja, data, valor)
@@ -114,7 +114,7 @@ LEFT JOIN (
       AND dataVenda >= @ini AND dataVenda < @fimx
     GROUP BY CAST(dataVenda AS date), tipoVenda, controle
 ) pg ON pg.data = v.data AND pg.tipoVenda = v.tipoVenda AND pg.controle = v.controle
-OPTION (MAX_GRANT_PERCENT = 5);
+OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
 END
 
 -- Vendas por loja/dia
@@ -131,7 +131,7 @@ FROM (
 ) t
 WHERE loja IS NOT NULL
 GROUP BY loja, data
-OPTION (MAX_GRANT_PERCENT = 5);
+OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
 
 IF @parte = 'produtos_espetto'
 -- Produtos Espetto (lógica da prod_15_anos_espetto)
@@ -142,7 +142,7 @@ LEFT JOIN bd_espetto_2025.dbo.BD_LOJAS_DEGUST l ON l.id = p.codLoja
 WHERE p.cancelado = 'N' AND p.quantidade >= 1 AND p.valUnitario > 1
   AND p.dataVenda >= @ini AND p.dataVenda < @fimx
 GROUP BY l.lojas, CAST(p.dataVenda AS date), p.descricaoProduto
-OPTION (MAX_GRANT_PERCENT = 5);
+OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
 
 IF @parte = 'produtos_parceiros'
 BEGIN
@@ -152,7 +152,7 @@ SELECT LOJA, DATA, PRODUTO, SUM(QUANTIDADE), SUM(VALOR)
 FROM master.dbo.vw_faturamento_villa_lobos_cupom
 WHERE DATA >= @inicio AND DATA <= @fim
 GROUP BY LOJA, DATA, PRODUTO
-OPTION (MAX_GRANT_PERCENT = 5);
+OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
 
 -- Produtos Cabo Frio Collab (base Mané, loja 13)
 INSERT #prod (loja, data, produto, qtd, valor)
@@ -161,7 +161,7 @@ FROM bd_mane_2025.dbo.BD_PRODUTOS_V2 p
 WHERE p.codLoja = 13 AND p.cancelado = 'N' AND p.quantidade >= 1 AND p.valUnitario > 1
   AND p.dataVenda >= @ini AND p.dataVenda < @fimx
 GROUP BY CAST(p.dataVenda AS date), p.descricaoProduto
-OPTION (MAX_GRANT_PERCENT = 5);
+OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
 END
 
 DELETE FROM #prod WHERE loja IS NULL OR qtd <= 0;
@@ -179,12 +179,12 @@ DECLARE @lojas nvarchar(max), @produtos nvarchar(max), @vendas nvarchar(max), @p
 SELECT @lojas = STUFF((
     SELECT ',"' + REPLACE(REPLACE(loja, '\', '\\'), '"', '\"') + '"'
     FROM #lj ORDER BY id FOR XML PATH(''), TYPE).value('.', 'nvarchar(max)'), 1, 1, '')
-OPTION (MAX_GRANT_PERCENT = 5);
+OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
 
 SELECT @produtos = STUFF((
     SELECT ',"' + REPLACE(REPLACE(produto, '\', '\\'), '"', '\"') + '"'
     FROM #pd ORDER BY id FOR XML PATH(''), TYPE).value('.', 'nvarchar(max)'), 1, 1, '')
-OPTION (MAX_GRANT_PERCENT = 5);
+OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
 
 SELECT @vendas = STUFF((
     SELECT ',[' + CAST(l.id AS varchar(10)) + ',"' + CONVERT(char(10), v.data, 120) + '",'
@@ -192,7 +192,7 @@ SELECT @vendas = STUFF((
          + CAST(v.c250 AS varchar(10)) + ',' + CONVERT(varchar(30), CAST(v.f250 AS decimal(16, 2))) + ']'
     FROM #ven v JOIN #lj l ON l.loja = v.loja
     ORDER BY l.id, v.data FOR XML PATH(''), TYPE).value('.', 'nvarchar(max)'), 1, 1, '')
-OPTION (MAX_GRANT_PERCENT = 5);
+OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
 
 SELECT @prods = STUFF((
     SELECT ',[' + CAST(l.id AS varchar(10)) + ',"' + CONVERT(char(10), p.data, 120) + '",'
@@ -201,7 +201,7 @@ SELECT @prods = STUFF((
     FROM #prod p JOIN #lj l ON l.loja = p.loja JOIN #pd d ON d.produto = p.produto
     GROUP BY l.id, p.data, d.id
     ORDER BY l.id, p.data, d.id FOR XML PATH(''), TYPE).value('.', 'nvarchar(max)'), 1, 1, '')
-OPTION (MAX_GRANT_PERCENT = 5);
+OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
 
 SELECT CAST('{"parte":"' + @parte + '","inicio":"' + CONVERT(char(10), @inicio, 120) + '","fim":"' + CONVERT(char(10), @fim, 120)
      + '","gerado_em":"' + CONVERT(varchar(19), GETDATE(), 126)

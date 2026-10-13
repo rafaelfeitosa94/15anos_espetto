@@ -7,8 +7,8 @@ Monitoramento da ação de 15/10 a 30/11/2026: cada comanda acima de **R$ 250,00
 ```
                     ┌── botão "Atualizar dados" (tempo real) ──┐
 Dashboard (Vercel) ─┤                                          ├─> Fluxo Power Automate ─> on-premises gateway ─> SQL Server
-                    └── data/dados.json  <── GitHub Actions 13:30 ┘        (FLOW_URL)              dbo.sp_dashboard_copo15
-                                         <── tarefa local 13:30 (plano B: extrator Python)
+                    └── data/dados.json  <── GitHub Actions 15:00 ┘        (FLOW_URL)              dbo.sp_dashboard_copo15
+                                         <── tarefa local 15:00 (plano B: extrator Python)
 ```
 
 - `public/`: página do dashboard (login, filtros, KPIs, ranking, top 10 produtos, mapa, tema claro/escuro),
@@ -18,8 +18,8 @@ Dashboard (Vercel) ─┤                                          ├─> Fluxo
 - `api/atualizar.js`: consulta ao vivo pelo gateway e status da conexão.
 - `lib/gateway.js`: chamada ao fluxo e consolidação (mesmo formato do extrator Python).
 - `sql/sp_dashboard_copo15.sql`: procedure executada pelo gateway; `sql/testar_procedure.py` testa sem criá-la.
-- `.github/workflows/atualizar-dados.yml`: atualização diária às 13:30 pelo gateway.
-- `extrator/`: extrator Python local (plano B), agendado no Windows às 13:30.
+- `.github/workflows/atualizar-dados.yml`: atualização diária às 15:00 pelo gateway.
+- `extrator/`: extrator Python local (plano B), agendado no Windows às 15:00.
 
 Passo a passo do gateway, do fluxo e dos segredos: **[docs/CONFIGURAR_GATEWAY.md](docs/CONFIGURAR_GATEWAY.md)**.
 

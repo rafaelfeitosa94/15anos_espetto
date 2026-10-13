@@ -4,8 +4,8 @@ name: Atualizar dados (gateway)
 # regrava data/dados.json e faz commit — a Vercel publica automaticamente a cada push.
 on:
   schedule:
-    # 13:30 em São Paulo (UTC-3) = 16:30 UTC. O GitHub pode atrasar alguns minutos.
-    - cron: '30 16 * * *'
+    # 15:00 em São Paulo (UTC-3) = 18:00 UTC. O GitHub pode atrasar alguns minutos.
+    - cron: '0 18 * * *'
   workflow_dispatch:
     inputs:
       inicio:

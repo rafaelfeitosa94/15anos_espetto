@@ -189,8 +189,9 @@ def build(cn, inicio, fim):
             d = r.data.isoformat() if hasattr(r.data, 'isoformat') else str(r.data)[:10]
             if li is None or d not in idx_dia:
                 continue
-            consumo = float(r.liquido or 0) - float(r.acrescimo or 0)
-            base = float(r.liquido or 0) if LIMITE_INCLUI_SERVICO else consumo
+            # arredonda em centavos antes de comparar (float: 250.00 pode virar 250.0000001)
+            consumo = round(float(r.liquido or 0) - float(r.acrescimo or 0), 2)
+            base = round(float(r.liquido or 0), 2) if LIMITE_INCLUI_SERVICO else consumo
             v = vendas[(li, idx_dia[d])]
             v[0] += consumo
             v[1] += 1
@@ -221,6 +222,7 @@ def build(cn, inicio, fim):
             pr[0] += float(r.qtd or 0)
             pr[1] += float(r.valor or 0)
         for (li, di, _), val in com_villa.items():
+            val = round(val, 2)
             v = vendas[(li, di)]
             v[0] += val
             v[1] += 1
@@ -234,7 +236,7 @@ def build(cn, inicio, fim):
             d = r.data.isoformat()
             if li is None or d not in idx_dia:
                 continue
-            val = float(r.valor or 0)
+            val = round(float(r.valor or 0), 2)
             v = vendas[(li, idx_dia[d])]
             v[0] += val
             v[1] += 1

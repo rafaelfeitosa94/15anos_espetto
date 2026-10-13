@@ -3,7 +3,7 @@
 ```
 Dashboard (Vercel)  ─┐                                   ┌─> SQL Server ad01\bartender
   botão "Atualizar"  ├─> Fluxo Power Automate (HTTP) ──> gateway ─┘   dbo.sp_dashboard_copo15
-GitHub Actions 13:30 ┘        (FLOW_URL)
+GitHub Actions 15:00 ┘        (FLOW_URL)
 ```
 
 O conector SQL do Power Automate **não executa consultas livres pelo gateway**. Só executa
@@ -24,10 +24,9 @@ Teste rápido no SSMS:
 EXEC dbo.sp_dashboard_copo15 @inicio = '2026-10-06', @fim = '2026-10-12', @parte = 'vendas';
 ```
 
-> **Recomendado:** as tabelas de origem (`bd_vendas_v3`, `BD_PRODUTOS_V2`, `BD_TC_V2`, `BD_PAGAMENTOS_V2`)
-> são *heaps* sem índice, então cada chamada lê a tabela inteira. Com o servidor ocupado (atualizações do Power BI)
-> o tempo pode passar de 110 s. Um índice em `dataVenda` nessas tabelas deixa a consulta muito mais rápida.
-> Avalie com quem mantém a carga (ETL).
+> Índices: [`sql/indices_dataVenda.sql`](../sql/indices_dataVenda.sql) cria índices em `dataVenda` nas tabelas de
+> origem (Espetto e Mané). Sem eles, cada chamada lê a tabela inteira e, com o servidor ocupado pelas atualizações
+> do Power BI, passa do limite de 110 s do gateway.
 
 ## 2. Criar o fluxo no Power Automate
 
@@ -82,8 +81,8 @@ Microsoft, e esse é o fluxo que o botão abre.
 
 ## 5. Agenda
 
-- **GitHub Actions** (`.github/workflows/atualizar-dados.yml`): roda todo dia às **13:30** (16:30 UTC),
+- **GitHub Actions** (`.github/workflows/atualizar-dados.yml`): roda todo dia às **15:00** (18:00 UTC),
   de 15/10 a 01/12. Consulta o período inteiro da ação, regrava `data/dados.json` e faz commit, e a Vercel publica.
   Também dá para rodar manualmente em *Actions → Atualizar dados (gateway) → Run workflow*, informando datas.
 - **Botão "Atualizar dados"** no dashboard: consulta **ao vivo** os últimos 3 dias e mescla com o snapshot.
-- **Tarefa local do Windows** (13:30): plano B pelo extrator Python, caso o gateway esteja fora.
+- **Tarefa local do Windows** (15:00): plano B pelo extrator Python, caso o gateway esteja fora.
