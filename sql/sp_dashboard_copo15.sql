@@ -24,6 +24,11 @@
 
   SQL Server 2014: sem FOR JSON / STRING_AGG, o JSON é montado com FOR XML PATH.
 */
+-- Obrigatório para os métodos XML (.value) usados na montagem do JSON: estas opções ficam gravadas na procedure.
+-- (o sqlcmd usa QUOTED_IDENTIFIER OFF por padrão; no SSMS já vem ON)
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+GO
 IF OBJECT_ID('dbo.sp_dashboard_copo15', 'P') IS NOT NULL
     DROP PROCEDURE dbo.sp_dashboard_copo15;
 GO
