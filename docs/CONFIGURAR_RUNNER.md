@@ -74,9 +74,11 @@ sozinho quando a nova versão estiver publicada, em cerca de 2 a 4 minutos.
 
 ## 5. Testar
 
-**Actions → Atualizar dados → Run workflow**. Antes de 15/10, informe datas passadas, por exemplo início
-`2026-10-06` e fim `2026-10-12`, para ver números de verdade. Depois rode de novo **sem datas** para voltar ao
-período da ação.
+Use **Actions → Atualizar dados → Run workflow**, sem datas. O log deve mostrar a consulta e
+"Publicado: …", e o `dados.json` recebe um commit "(runner)".
+
+> O dashboard só guarda dias dentro do período da ação (15/10 a 30/11). Antes de 15/10 a execução
+> valida o caminho inteiro (SQL → runner → GitHub → Vercel), mas os indicadores ficam zerados.
 
 ## Plano B
 
