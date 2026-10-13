@@ -609,6 +609,8 @@
     if (tileLayer) return;
     tileLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 18,
+      // o OSM bloqueia (403) tiles pedidos sem Referer; envia só a origem do site
+      referrerPolicy: 'strict-origin-when-cross-origin',
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(map);
   }
