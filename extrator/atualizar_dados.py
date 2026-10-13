@@ -289,6 +289,9 @@ def publicar(saida):
         logging.info('Sem alterações nos dados; nada a publicar.')
         return
     git('commit', '-m', f'dados: atualização {dt.datetime.now():%d/%m/%Y %H:%M}', '--', rel)
+    # o workflow do GitHub (gateway) também grava este arquivo: integra antes de enviar,
+    # mantendo a versão local em caso de conflito (as duas são do mesmo horário)
+    git('pull', '--rebase', '-X', 'theirs')
     git('push')
     logging.info('Dados publicados no GitHub (a Vercel fará o deploy em instantes).')
 

@@ -7,8 +7,8 @@ process.chdir(__dirname);
 if (process.argv[2]) process.env.DATA_FILE = process.argv[2]; // ex.: node dev-server.js teste.json
 const PORT = process.env.PORT || 3015;
 const PUBLIC = path.join(__dirname, 'public');
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.json': 'application/json' };
-const handlers = { '/api/login': require('./api/login'), '/api/data': require('./api/data') };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.webp': 'image/webp', '.json': 'application/json' };
+const handlers = { '/api/login': require('./api/login'), '/api/data': require('./api/data'), '/api/atualizar': require('./api/atualizar') };
 
 function wrapRes(res) {
   res.status = (c) => { res.statusCode = c; return res; };

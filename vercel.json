@@ -1,7 +1,8 @@
 {
   "outputDirectory": "public",
   "functions": {
-    "api/data.js": { "includeFiles": "data/**" }
+    "api/data.js": { "includeFiles": "data/**" },
+    "api/atualizar.js": { "includeFiles": "{data/**,extrator/lojas.json}", "maxDuration": 120 }
   },
   "headers": [
     {

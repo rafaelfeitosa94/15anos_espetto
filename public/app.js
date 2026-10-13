@@ -110,23 +110,90 @@
     return r.json();
   }
 
+  // Atualizar: consulta ao vivo pelo gateway (/api/atualizar); se o gateway não estiver
+  // configurado, recarrega o último snapshot publicado (/api/data).
   async function refresh() {
     const btn = $('btnRefresh');
     btn.disabled = true;
     $('refreshIco').classList.add('spin');
+    toast('Consultando o banco pelo gateway… pode levar até 1 minuto');
     try {
-      const prev = DATA && DATA.atualizado_em;
-      DATA = await loadData();
-      indexData();
-      render();
-      toast(prev && prev === DATA.atualizado_em
-        ? 'Dados já estão na versão mais recente (' + fmtStamp(DATA.atualizado_em) + ')'
-        : 'Dados atualizados: ' + fmtStamp(DATA.atualizado_em));
+      const r = await fetch('/api/atualizar', { method: 'POST', credentials: 'same-origin', cache: 'no-store' });
+      if (r.status === 401) { showLogin(); throw new Error('Sessão expirada'); }
+      const j = await r.json().catch(() => ({}));
+      if (j.ok && j.dados) {
+        DATA = j.dados;
+        indexData();
+        setGateway(j.gateway);
+        render();
+        toast('Dados atualizados em tempo real: ' + fmtStamp(DATA.atualizado_em));
+      } else {
+        const st = (j.gateway && j.gateway.status) || 'erro';
+        DATA = await loadData();
+        indexData();
+        if (st !== 'nao_configurado') setGateway(j.gateway);
+        render();
+        toast(st === 'nao_configurado'
+          ? 'Gateway ainda não configurado: exibindo a última atualização publicada (' + fmtStamp(DATA.atualizado_em) + ')'
+          : 'Não foi possível consultar o gateway: exibindo a última atualização publicada');
+      }
     } catch (e) {
       toast(e.message);
     } finally {
       btn.disabled = false;
       $('refreshIco').classList.remove('spin');
+    }
+  }
+
+  /* ---------------- gateway ---------------- */
+  const GW_MSG = {
+    ok: 'Gateway conectado',
+    reautenticar: 'Reautenticação necessária',
+    gateway_offline: 'Gateway offline',
+    timeout: 'Gateway sem resposta (tempo limite)',
+    erro: 'Falha na última consulta',
+    nao_configurado: 'Gateway não configurado',
+  };
+  let gwState = null;
+
+  function setGateway(g) {
+    if (g) gwState = g;
+    const st = gwState && gwState.status;
+    const dot = $('gwDot');
+    dot.className = 'gw-dot ' + (st === 'ok' ? 'ok' : !st || st === 'nao_configurado' ? 'idle' : 'warn');
+    $('gwTxt').textContent = (GW_MSG[st] || 'Gateway: sem consulta ainda') +
+      (gwState && gwState.em ? ' · ' + fmtStamp(gwState.em) : '');
+    const alerta = st && !['ok', 'nao_configurado'].includes(st);
+    $('gwBox').classList.toggle('alerta', !!alerta);
+    $('gwBanner').classList.toggle('hidden', !alerta);
+    if (alerta) {
+      $('gwBannerTxt').textContent = st === 'reautenticar'
+        ? '⚠ A conexão com o gateway precisa ser reativada (validação em 2 etapas). Os dados exibidos podem estar desatualizados.'
+        : `⚠ ${GW_MSG[st] || 'Falha no gateway'}. Os dados exibidos são da última atualização bem-sucedida. Se persistir, reative a conexão.`;
+    }
+    $('gwModalStatus').textContent = 'Status atual: ' + (GW_MSG[st] || 'sem consulta ainda') +
+      (gwState && gwState.mensagem ? ' (' + gwState.mensagem.slice(0, 140) + ')' : '');
+  }
+
+  function abrirGateway() { setGateway(); $('gwModal').classList.remove('hidden'); }
+  function fecharGateway() { $('gwModal').classList.add('hidden'); }
+
+  async function testarGateway() {
+    const b = $('gwTestar');
+    b.disabled = true;
+    b.textContent = 'Testando…';
+    try {
+      const r = await fetch('/api/atualizar?teste=1', { method: 'POST', credentials: 'same-origin', cache: 'no-store' });
+      if (r.status === 401) { fecharGateway(); showLogin(); return; }
+      const j = await r.json();
+      setGateway(j.gateway);
+      toast(j.ok ? 'Conexão com o gateway OK ✔' : 'Conexão ainda com problema: ' + (GW_MSG[j.gateway.status] || j.gateway.status));
+      if (j.ok) fecharGateway();
+    } catch (e) {
+      toast('Falha ao testar: ' + e.message);
+    } finally {
+      b.disabled = false;
+      b.textContent = 'Testar conexão';
     }
   }
 
@@ -529,6 +596,12 @@
     $('btnLogout').addEventListener('click', logout);
     $('btnTheme').addEventListener('click', toggleTheme);
     $('btnRefresh').addEventListener('click', refresh);
+    $('btnGateway').addEventListener('click', abrirGateway);
+    $('gwBannerBtn').addEventListener('click', abrirGateway);
+    $('gwClose').addEventListener('click', fecharGateway);
+    $('gwModal').addEventListener('click', e => { if (e.target.id === 'gwModal') fecharGateway(); });
+    $('gwTestar').addEventListener('click', testarGateway);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharGateway(); });
     $('sbOpen').addEventListener('click', () => $('app').classList.add('sb-on'));
     $('sbClose').addEventListener('click', () => $('app').classList.remove('sb-on'));
     $('sbBackdrop').addEventListener('click', () => $('app').classList.remove('sb-on'));
@@ -575,7 +648,9 @@
     $('login').classList.add('hidden');
     $('app').classList.remove('hidden');
     setupFilters();
+    setGateway(DATA.gateway || null);
     render();
+    if (location.hash === '#gateway') abrirGateway(); // link direto para a validação
     // re-renderiza quando as fontes da marca terminam de carregar (gráficos medem os rótulos)
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => render());
     if (map) setTimeout(() => map.invalidateSize(), 50);
