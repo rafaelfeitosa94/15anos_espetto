@@ -28,18 +28,21 @@ jobs:
   atualizar:
     runs-on: [self-hosted, windows, sqlserver]
     timeout-minutes: 30
+    # Os passos usam um shell PowerShell com -ExecutionPolicy Bypass porque a política de execução
+    # do SRVTESTE é "Restricted" (bloqueia os scripts temporários que o Actions cria). Vale só para
+    # o processo do passo; a política do servidor não é alterada.
     steps:
       - name: Verificar período da ação
         id: periodo
-        shell: powershell
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command ". '{0}'"
         run: |
           $hoje = [System.TimeZoneInfo]::ConvertTimeBySystemTimeZoneId([datetime]::UtcNow, 'E. South America Standard Time').ToString('yyyy-MM-dd')
           # agenda roda de 15/10 até 01/12 (o dia 30/11 termina de entrar no banco no dia seguinte); manual roda sempre
           if ('${{ github.event_name }}' -eq 'workflow_dispatch' -or ($hoje -ge '2026-10-15' -and $hoje -le '2026-12-01')) {
-            "rodar=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            Add-Content -Path $env:GITHUB_OUTPUT -Value "rodar=true" -Encoding Ascii
           } else {
             Write-Host "Fora do período da ação ($hoje); nada a fazer."
-            "rodar=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            Add-Content -Path $env:GITHUB_OUTPUT -Value "rodar=false" -Encoding Ascii
           }
 
       - uses: actions/checkout@v4
@@ -52,7 +55,7 @@ jobs:
 
       - name: Consultar SQL Server e publicar data/dados.json
         if: steps.periodo.outputs.rodar == 'true'
-        shell: powershell
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command ". '{0}'"
         env:
           DB_SERVER: ${{ secrets.DB_SERVER }}
           DB_USER: ${{ secrets.DB_USER }}
