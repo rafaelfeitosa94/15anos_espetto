@@ -322,8 +322,8 @@
     const nDays = days.length || 1;
     $('kC250').textContent = int(tot.c250);
     $('kC250s').textContent = tot.com ? `${pct(tot.c250 / tot.com)} das comandas · ${brlShort(tot.fat250)}` : '—';
-    $('kCopos').textContent = `${int(usados)} / ${int(tot.copos)}`;
-    $('kCoposS').textContent = tot.copos ? `${pct(usados / tot.copos)} do estoque · saldo ${int(Math.max(0, tot.copos - usados))}` : '—';
+    $('kCopos').textContent = int(usados);
+    $('kCoposS').textContent = tot.copos ? `de ${int(tot.copos)} · ${pct(usados / tot.copos)} do estoque · saldo ${int(Math.max(0, tot.copos - usados))}` : '—';
     setBar($('kCoposBar'), tot.copos ? usados / tot.copos : 0);
     $('kFat').textContent = brlShort(tot.fat);
     $('kFat').title = brl(tot.fat);
@@ -368,7 +368,7 @@
   }
 
   function chartDefaults() {
-    Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+    Chart.defaults.font.family = 'Gotham, Montserrat, system-ui, sans-serif';
     Chart.defaults.color = cssVar('--muted');
     Chart.defaults.borderColor = cssVar('--grid');
   }
@@ -378,7 +378,7 @@
     const key = state.evo;
     const labels = days.map(d => fmtDate(d.d));
     const vals = days.map(d => d[key]);
-    const color = key === 'c250' ? cssVar('--accent') : key === 'fat' ? cssVar('--accent-2') : cssVar('--ok');
+    const color = key === 'c250' ? cssVar('--accent') : key === 'fat' ? cssVar('--accent-2') : cssVar('--accent-3');
     const fmt = key === 'fat' ? brlShort : int;
     const cfg = {
       type: 'bar',
@@ -405,7 +405,7 @@
     const cfg = {
       type: 'bar',
       data: {
-        labels: top.map(t => t.nome.length > 34 ? t.nome.slice(0, 33) + '…' : t.nome),
+        labels: top.map(t => t.nome.length > 24 ? t.nome.slice(0, 23) + '…' : t.nome),
         datasets: [{
           data: top.map(t => t[key]),
           backgroundColor: top.map((_, i) => i < 3 ? cssVar('--accent') : cssVar('--accent-2')),
@@ -414,6 +414,7 @@
       },
       options: {
         indexAxis: 'y', responsive: true, maintainAspectRatio: false, animation: { duration: 300 },
+        layout: { padding: { left: 4 } },
         plugins: {
           legend: { display: false },
           tooltip: { callbacks: {
@@ -575,6 +576,8 @@
     $('app').classList.remove('hidden');
     setupFilters();
     render();
+    // re-renderiza quando as fontes da marca terminam de carregar (gráficos medem os rótulos)
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => render());
     if (map) setTimeout(() => map.invalidateSize(), 50);
   }
 

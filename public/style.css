@@ -1,58 +1,86 @@
+/* Paleta institucional Grupo Impettus (Manual da Marca 2025)
+   #1d1d1b preto · #868686 cinza · #db702d laranja (717 C) · #f78400 laranja-amarelo (124 C) · #f6cd46 amarelo · #0071bc azul (641 C) */
 :root {
-  --bg: #f4f2ef;
-  --surface: #ffffff;
-  --surface-2: #f8f6f3;
-  --border: #e6e1da;
-  --text: #1d1a17;
-  --muted: #6f675f;
-  --accent: #c8102e;
-  --accent-2: #e8a33d;
-  --accent-soft: rgba(200, 16, 46, .09);
-  --ok: #2f9e6b;
-  --warn: #e0a128;
-  --bad: #d23b3b;
-  --grid: rgba(0, 0, 0, .07);
-  --shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 16px rgba(0,0,0,.05);
+  --brand-black: #1d1d1b;
+  --brand-gray: #868686;
+  --brand-orange: #db702d;
+  --brand-orange-2: #f78400;
+  --brand-yellow: #f6cd46;
+  --brand-blue: #0071bc;
+  --brand-gradient: linear-gradient(120deg, #db702d 0%, #f78400 55%, #f6cd46 100%);
+
+  --bg: #f6f5f2;
+  --surface: rgba(255, 255, 255, .92);
+  --surface-solid: #ffffff;
+  --surface-2: #f3f2ef;
+  --border: #e4e2dd;
+  --text: #1d1d1b;
+  --muted: #6e6e6c;
+  --accent: #db702d;
+  --accent-2: #f78400;
+  --accent-3: #0071bc;
+  --accent-soft: rgba(219, 112, 45, .10);
+  --ok: #0071bc;
+  --warn: #f78400;
+  --bad: #d63a2f;
+  --grid: rgba(29, 29, 27, .08);
+  --shadow: 0 1px 2px rgba(29,29,27,.05), 0 6px 20px rgba(29,29,27,.06);
   --logo-filter: invert(1);
   --radius: 14px;
+  --bg-doodle: url(img/doodle-escuro.webp);
+  --bg-graf: url(img/grafismos.webp);
+  --impettus-logo: url(img/impettus-preto.png);
+  --bg-op: .07;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #111110;
-    --surface: #1b1a19;
-    --surface-2: #232220;
-    --border: #2f2d2a;
-    --text: #f2efea;
-    --muted: #a39b91;
-    --accent: #ef3b53;
-    --accent-2: #f2b552;
-    --accent-soft: rgba(239, 59, 83, .14);
-    --ok: #3fbf86;
-    --warn: #f0b23a;
-    --bad: #f05a5a;
+    --bg: #1d1d1b;
+    --surface: rgba(40, 40, 38, .9);
+    --surface-solid: #282826;
+    --surface-2: #31312e;
+    --border: #3a3a37;
+    --text: #f5f5f3;
+    --muted: #a8a8a5;
+    --accent: #f78400;
+    --accent-2: #f6cd46;
+    --accent-3: #3b9be0;
+    --accent-soft: rgba(247, 132, 0, .14);
+    --ok: #3b9be0;
+    --warn: #f6cd46;
+    --bad: #f0604f;
     --grid: rgba(255, 255, 255, .08);
     --shadow: 0 1px 2px rgba(0,0,0,.4);
     --logo-filter: none;
+    --bg-doodle: url(img/doodle-claro.webp);
+    --bg-graf: url(img/grafismos-claro.webp);
+    --impettus-logo: url(img/impettus-branco.png);
+    --bg-op: .06;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #111110;
-  --surface: #1b1a19;
-  --surface-2: #232220;
-  --border: #2f2d2a;
-  --text: #f2efea;
-  --muted: #a39b91;
-  --accent: #ef3b53;
-  --accent-2: #f2b552;
-  --accent-soft: rgba(239, 59, 83, .14);
-  --ok: #3fbf86;
-  --warn: #f0b23a;
-  --bad: #f05a5a;
+  --bg: #1d1d1b;
+  --surface: rgba(40, 40, 38, .9);
+  --surface-solid: #282826;
+  --surface-2: #31312e;
+  --border: #3a3a37;
+  --text: #f5f5f3;
+  --muted: #a8a8a5;
+  --accent: #f78400;
+  --accent-2: #f6cd46;
+  --accent-3: #3b9be0;
+  --accent-soft: rgba(247, 132, 0, .14);
+  --ok: #3b9be0;
+  --warn: #f6cd46;
+  --bad: #f0604f;
   --grid: rgba(255, 255, 255, .08);
   --shadow: 0 1px 2px rgba(0,0,0,.4);
   --logo-filter: none;
+  --bg-doodle: url(img/doodle-claro.webp);
+  --bg-graf: url(img/grafismos-claro.webp);
+  --impettus-logo: url(img/impettus-branco.png);
+  --bg-op: .06;
   color-scheme: dark;
 }
 
@@ -61,13 +89,13 @@ html, body { margin: 0; }
 body {
   background: var(--bg);
   color: var(--text);
-  font: 14px/1.45 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font: 14px/1.45 Gotham, Montserrat, system-ui, -apple-system, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 .hidden { display: none !important; }
 .muted { color: var(--muted); }
 .small { font-size: 12px; }
-h1, h2, h3 { margin: 0; letter-spacing: -.01em; }
+h1, h2, h3, .kpi-lbl, .sb-block h3 { margin: 0; letter-spacing: .01em; font-family: "Century Gothic", CenturyGothic, Questrial, "Didact Gothic", sans-serif; }
 button, input, select { font: inherit; color: inherit; }
 .logo { filter: var(--logo-filter); display: block; }
 
@@ -79,7 +107,7 @@ button, input, select { font: inherit; color: inherit; }
   transition: background .15s, border-color .15s, transform .05s;
 }
 .btn:active { transform: translateY(1px); }
-.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-primary { background: var(--brand-gradient); border-color: transparent; color: #fff; text-shadow: 0 1px 1px rgba(0,0,0,.15); }
 .btn-primary:hover { filter: brightness(1.07); }
 .btn-ghost { background: transparent; }
 .btn-ghost:hover { background: var(--surface-2); }
@@ -93,13 +121,19 @@ button, input, select { font: inherit; color: inherit; }
 /* ---------- login ---------- */
 .login {
   min-height: 100vh; display: grid; place-items: center; padding: 24px 16px;
-  background:
-    radial-gradient(1200px 600px at 10% -10%, var(--accent-soft), transparent 60%),
-    radial-gradient(900px 500px at 110% 110%, rgba(232,163,61,.12), transparent 60%),
-    var(--bg);
+  position: relative; overflow: hidden; isolation: isolate;
+  background: var(--brand-gradient);
+}
+/* fundo do login: padrão de raios + ilustração da marca, com pouca visibilidade */
+.login::before, .login::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.login::before { background: url(img/raios.webp) center / cover; opacity: .25; mix-blend-mode: soft-light; }
+.login::after {
+  background: url(img/doodle-claro.webp) right -60px center / auto 115% no-repeat,
+              url(img/doodle-claro.webp) left -120px center / auto 115% no-repeat;
+  opacity: .10;
 }
 .login-card {
-  width: 100%; max-width: 380px; background: var(--surface); border: 1px solid var(--border);
+  width: 100%; max-width: 380px; background: var(--surface-solid); border: 1px solid var(--border);
   border-radius: 20px; padding: 32px 28px; box-shadow: var(--shadow);
   display: flex; flex-direction: column; gap: 14px;
 }
@@ -113,15 +147,17 @@ button, input, select { font: inherit; color: inherit; }
   outline: none;
 }
 .login-card input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.login-brand { height: 26px; background: var(--impettus-logo) center / contain no-repeat; margin-top: 4px; opacity: .85; }
 .login-err { color: var(--bad); min-height: 18px; margin: 0; font-size: 13px; text-align: center; }
 
 /* ---------- layout ---------- */
 .app { display: flex; min-height: 100vh; }
 .sidebar {
-  width: 280px; flex: 0 0 280px; background: var(--surface); border-right: 1px solid var(--border);
+  width: 280px; flex: 0 0 280px; background: var(--surface-solid); border-right: 1px solid var(--border);
   position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; padding: 18px 16px; gap: 18px;
   overflow: hidden;
 }
+.sidebar::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; background: var(--brand-gradient); }
 .sb-head { display: flex; align-items: center; justify-content: center; position: relative; }
 .sb-logo { width: 120px; height: auto; }
 .sb-close { display: none; position: absolute; right: 0; top: 0; }
@@ -146,28 +182,48 @@ button, input, select { font: inherit; color: inherit; }
 .loja-item:hover { background: var(--surface-2); }
 .loja-item input { accent-color: var(--accent); width: 15px; height: 15px; margin: 0; }
 .loja-item .uf { margin-left: auto; font-size: 11px; color: var(--muted); }
+.sb-brand { height: 28px; background: var(--impettus-logo) center / contain no-repeat; opacity: .8; margin-top: 4px; }
 .sb-foot { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--border); padding-top: 14px; }
 .sb-foot-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .upd { font-size: 12px; text-align: center; margin: 0; }
 .sb-backdrop { display: none; }
 
-.main { flex: 1; min-width: 0; padding: 20px 24px 28px; display: flex; flex-direction: column; gap: 18px; }
+.main { flex: 1; min-width: 0; padding: 20px 24px 28px; display: flex; flex-direction: column; gap: 18px; position: relative; isolation: isolate; }
+/* fundo do painel: ilustração e grafismos da marca, quase transparentes */
+.app { position: relative; }
+.app::before {
+  content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: var(--bg-op);
+  background:
+    var(--bg-doodle) right -80px top 40px / 520px auto no-repeat,
+    var(--bg-graf) left 200px bottom -160px / 900px auto no-repeat;
+}
+.app > .main { z-index: 1; }
+.sidebar { z-index: 2; }
 
 .topbar {
-  display: flex; align-items: center; gap: 18px; background: #151413; color: #f2efea;
+  display: flex; align-items: center; gap: 18px; color: #fff;
   border-radius: var(--radius); padding: 14px 20px; box-shadow: var(--shadow);
-  background-image: linear-gradient(110deg, #151413 55%, #3a0d15);
+  background: var(--brand-gradient); position: relative; overflow: hidden; isolation: isolate;
 }
-.topbar .muted { color: #b9b0a6; }
+.topbar::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: url(img/raios.webp) center / 900px auto repeat-x; opacity: .45; mix-blend-mode: soft-light;
+}
+.topbar::after {
+  content: ""; position: absolute; right: 250px; top: -30px; bottom: -30px; width: 260px; z-index: -1; pointer-events: none;
+  background: url(img/doodle-claro.webp) center / cover no-repeat; opacity: .13;
+}
+.topbar .muted { color: rgba(255,255,255,.88); }
+.topbar b { color: #fff; }
 .top-logo { width: 74px; height: auto; filter: none; }
 .top-title { flex: 1; min-width: 0; }
 .top-title h1 { font-size: 22px; font-weight: 800; }
 .top-title p { margin: 2px 0 0; font-size: 13px; }
 .sb-open { display: none; color: #fff; }
 .progress-wrap { width: 220px; }
-.progress-lbl { font-size: 12px; color: #d8d0c6; margin-bottom: 6px; text-align: right; }
-.progress { height: 8px; background: rgba(255,255,255,.12); border-radius: 99px; overflow: hidden; }
-.progress-bar { height: 100%; width: 0; background: linear-gradient(90deg, var(--accent-2), #ef3b53); border-radius: 99px; transition: width .6s; }
+.progress-lbl { font-size: 12px; color: #fff; font-weight: 600; margin-bottom: 6px; text-align: right; }
+.progress { height: 8px; background: rgba(29,29,27,.22); border-radius: 99px; overflow: hidden; }
+.progress-bar { height: 100%; width: 0; background: #fff; border-radius: 99px; transition: width .6s; }
 
 .banner {
   background: var(--accent-soft); border: 1px solid var(--accent); color: var(--text);
@@ -181,9 +237,12 @@ button, input, select { font: inherit; color: inherit; }
   box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 4px; min-width: 0;
 }
 .kpi-lbl { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
-.kpi-val { font-size: 26px; font-weight: 800; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.kpi-val { font-size: clamp(19px, 1.75vw, 26px); font-weight: 800; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 .kpi-sub { font-size: 12px; color: var(--muted); }
-.kpi-accent { border-color: var(--accent); background: linear-gradient(180deg, var(--accent-soft), var(--surface) 80%); }
+.kpi-accent { border-color: var(--accent); background: linear-gradient(180deg, var(--accent-soft), var(--surface) 80%), var(--surface-solid); }
+.kpi { position: relative; overflow: hidden; }
+.kpi::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--border); }
+.kpi-accent::before { background: var(--brand-gradient); height: 4px; }
 .kpi-accent .kpi-val { color: var(--accent); }
 .mini-bar { height: 6px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 99px; overflow: hidden; margin: 4px 0 2px; }
 .mini-bar > div { height: 100%; width: 0; background: var(--ok); border-radius: 99px; transition: width .5s; }
@@ -191,11 +250,15 @@ button, input, select { font: inherit; color: inherit; }
 /* ---------- cards ---------- */
 .grid-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
 .card {
-  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface); backdrop-filter: blur(2px); border: 1px solid var(--border); border-radius: var(--radius);
   padding: 16px 18px; box-shadow: var(--shadow); min-width: 0;
 }
 .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
-.card-head h2 { font-size: 16px; font-weight: 700; }
+.card-head h2 { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.card-head h2::before {
+  content: ""; width: 10px; height: 18px; background: var(--brand-gradient);
+  clip-path: polygon(62% 0, 0 58%, 42% 58%, 30% 100%, 100% 36%, 56% 36%); flex: 0 0 auto;
+}
 .card-head .select { width: auto; }
 .seg { display: inline-flex; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 3px; }
 .seg button { border: 0; background: transparent; padding: 5px 10px; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--muted); }
@@ -207,7 +270,7 @@ button, input, select { font: inherit; color: inherit; }
 .table-wrap { max-height: 360px; overflow: auto; margin: 0 -6px; }
 .rank { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
 .rank th {
-  position: sticky; top: 0; background: var(--surface); text-align: left; font-size: 11px; text-transform: uppercase;
+  position: sticky; top: 0; background: var(--surface-solid); text-align: left; font-size: 11px; text-transform: uppercase;
   letter-spacing: .04em; color: var(--muted); padding: 6px; border-bottom: 1px solid var(--border); z-index: 1; white-space: nowrap;
 }
 .rank td { padding: 7px 6px; border-bottom: 1px solid var(--border); white-space: nowrap; }

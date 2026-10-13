@@ -11,7 +11,7 @@ SQL Server (ad01\bartender)  ──>  extrator/atualizar_dados.py  ──>  data
                                               GitHub  ──>  Vercel (deploy automático)
 ```
 
-- `public/` – página do dashboard (login, filtros, KPIs, ranking, top 10 produtos, mapa, tema claro/escuro).
+- `public/` – página do dashboard (login, filtros, KPIs, ranking, top 10 produtos, mapa, tema claro/escuro), no padrão visual do Manual da Marca Impettus 2025 (paleta, tipografia, padrões e ilustrações em `public/img/`).
 - `api/login.js` – login (cookie HttpOnly assinado, 12h).
 - `api/data.js` – entrega `data/dados.json` apenas para usuários autenticados.
 - `extrator/` – script Python que consulta o banco e publica os dados.
@@ -27,6 +27,7 @@ SQL Server (ad01\bartender)  ──>  extrator/atualizar_dados.py  ──>  data
 | Copos utilizados | comandas > R$ 250 acumuladas desde 15/10 até a data final do filtro, versus copos enviados à loja |
 
 **Villa Lobos** vem de `vw_faturamento_villa_lobos_cupom` (comandas e produtos na mesma consulta).
+**Cabo Frio Collab** vem de `vw_faturamento_cabofrio_collab_cupom` (valor por comanda já com serviço/cortesia da própria comanda); produtos da base do Mané (`bd_mane_2025.dbo.BD_PRODUTOS_V2`, loja 13).
 Produtos das demais lojas vêm de `prod_15_anos_espetto`.
 
 > A `vw_faturamento_espetto_cupom` soma a taxa de serviço e as cortesias **do dia inteiro** em cada comanda,

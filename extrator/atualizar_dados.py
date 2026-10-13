@@ -74,6 +74,24 @@ WHERE DATA >= ? AND DATA < ?
 GROUP BY LOJA, DATA, PRODUTO, COMANDAS
 """
 
+# Cabo Frio Collab (Mané): a view já calcula serviço/cortesia por comanda, então é usada diretamente
+SQL_COLLAB = """
+SELECT LOJA AS loja, CAST(DATA_HORA AS date) AS data, COMANDA AS comanda, SUM(FATURAMENTO) AS valor
+FROM vw_faturamento_cabofrio_collab_cupom
+WHERE DATA_HORA >= ? AND DATA_HORA < ?
+GROUP BY LOJA, CAST(DATA_HORA AS date), COMANDA
+"""
+
+# Produtos da Cabo Frio Collab: mesma lógica da prod_15_anos_espetto, na base do Mané (loja 13)
+SQL_PRODUTOS_COLLAB = """
+SELECT 'MAN CABO FRIO COLLAB' AS LOJA, CAST(p.dataVenda AS date) AS data, p.descricaoProduto AS PRODUTO,
+       SUM(p.quantidade) AS qtd, SUM(p.valTotal) AS valor
+FROM bd_mane_2025.dbo.BD_PRODUTOS_V2 p
+WHERE p.codLoja = 13 AND p.cancelado = 'N' AND p.quantidade >= 1 AND p.valUnitario > 1
+  AND p.dataVenda >= ? AND p.dataVenda < ?
+GROUP BY CAST(p.dataVenda AS date), p.descricaoProduto
+"""
+
 SQL_PRODUTOS = """
 SELECT LOJA, CAST(DATA AS date) AS data, PRODUTO, SUM(QUANTIDADE) AS qtd, SUM(VALOR) AS valor
 FROM prod_15_anos_espetto
@@ -93,9 +111,14 @@ GROUP BY l.lojas, CAST(p.dataVenda AS date), p.descricaoProduto
 """
 
 
+# nomes no banco que diferem do código da planilha
+ALIASES = {'MAN COLLAB CABO FRIO': 'MAN CABO FRIO COLLAB'}
+
+
 def norm(s):
     s = unicodedata.normalize('NFKD', str(s or '')).encode('ascii', 'ignore').decode().upper()
-    return ' '.join(s.replace('VILLA', 'VILA').split())
+    s = ' '.join(s.replace('VILLA', 'VILA').split())
+    return ALIASES.get(s, s)
 
 
 def load_env():
@@ -205,9 +228,24 @@ def build(cn, inicio, fim):
                 v[2] += 1
                 v[3] += val
 
-        # ---- Produtos Espetto ----
+        # ---- Cabo Frio Collab (comandas) ----
+        for r in fetch(cn, SQL_COLLAB, p, 'cabo frio collab'):
+            li = loja_i(r.loja)
+            d = r.data.isoformat()
+            if li is None or d not in idx_dia:
+                continue
+            val = float(r.valor or 0)
+            v = vendas[(li, idx_dia[d])]
+            v[0] += val
+            v[1] += 1
+            if val > LIMITE:
+                v[2] += 1
+                v[3] += val
+
+        # ---- Produtos (Espetto + Cabo Frio Collab) ----
         sql_prod = SQL_PRODUTOS if ini_q >= dt.date.fromisoformat(INICIO_ACAO) else SQL_PRODUTOS_BASE
-        for r in fetch(cn, sql_prod, p, 'produtos espetto'):
+        linhas_prod = fetch(cn, sql_prod, p, 'produtos espetto') + fetch(cn, SQL_PRODUTOS_COLLAB, p, 'produtos collab')
+        for r in linhas_prod:
             li = loja_i(r.LOJA)
             d = r.data.isoformat()
             if li is None or d not in idx_dia:

@@ -23,6 +23,12 @@ function wrapRes(res) {
 http.createServer((req, res) => {
   const url = new URL(req.url, 'http://localhost');
   const h = handlers[url.pathname];
+  if (process.env.DEV_NOAUTH && !req.headers.cookie) {
+    // somente local: autentica automaticamente (usado para capturas de tela headless)
+    let c = '';
+    require('./lib/auth').issueCookie({ setHeader: (_, v) => { c = String(v).split(';')[0]; } });
+    req.headers.cookie = c;
+  }
   if (h) {
     let body = '';
     req.on('data', c => { body += c; });
