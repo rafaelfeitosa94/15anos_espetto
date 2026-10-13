@@ -1,15 +1,11 @@
 /*
-  Procedure usada pelo Power Automate (via on-premises data gateway) para o dashboard
-  "Ação Copo 15 Anos". Retorna UMA linha com a coluna [payload] contendo um JSON compacto.
-
-  Por que procedure: o conector SQL do Power Automate NÃO executa consultas livres
-  ("Executar uma consulta SQL (V2)") através do gateway; só procedures. Limites do gateway:
-  resposta de até 8 MB e 110 segundos — por isso o JSON é compacto e cada chamada traz só uma @parte:
+  Procedure usada pelo runner do GitHub (scripts/exec-sp.ps1) para o dashboard "Ação Copo 15 Anos".
+  Retorna UMA linha com a coluna [payload] contendo um JSON compacto. Cada chamada traz só uma @parte:
     'vendas'             comandas, faturamento e comandas acima do limite (todas as lojas)
     'produtos_espetto'   produtos das lojas Espetto
     'produtos_parceiros' produtos de Villa Lobos e Cabo Frio Collab
-  As tabelas de origem têm índice em dataVenda (sql/indices_dataVenda.sql); OPTION (RECOMPILE) faz o
-  otimizador usar as datas reais e buscar pelo índice. As três partes são chamadas em paralelo.
+  As três partes são chamadas em paralelo, em blocos de 7 dias. As tabelas de origem têm índice em
+  dataVenda (sql/indices_dataVenda.sql); OPTION (RECOMPILE) faz o otimizador usar as datas reais.
 
   Regras (iguais às do extrator Python):
   - Espetto: comandas de bd_vendas_v3 (valor = valLiquido - valAcrescimo por comanda);

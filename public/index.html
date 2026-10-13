@@ -68,9 +68,9 @@
     </div>
 
     <div class="sb-foot">
-      <div class="gw" id="gwBox" title="Conexão com o SQL Server pelo on-premises data gateway">
-        <div class="gw-row"><span class="gw-dot" id="gwDot"></span><span class="gw-txt" id="gwTxt">Gateway: verificando…</span></div>
-        <button class="btn btn-ghost btn-block btn-sm" id="btnGateway">🔐 Validar conexão (2 etapas)</button>
+      <div class="gw" id="gwBox" title="Servidor da rede (runner do GitHub) que consulta o SQL Server de hora em hora, das 11h às 23h">
+        <div class="gw-row"><span class="gw-dot" id="gwDot"></span><span class="gw-txt" id="gwTxt">Servidor: verificando…</span></div>
+        <a class="gw-link small hidden" id="gwLink" href="#" target="_blank" rel="noopener">Ver execução no GitHub ↗</a>
       </div>
       <button class="btn btn-primary btn-block" id="btnRefresh">
         <span class="ico" id="refreshIco">⟳</span> Atualizar dados
@@ -100,8 +100,8 @@
     </header>
 
     <div id="gwBanner" class="banner banner-warn hidden" role="alert">
-      <span id="gwBannerTxt">A conexão com o gateway precisa ser reativada.</span>
-      <button class="btn btn-sm btn-primary" id="gwBannerBtn">Reativar agora</button>
+      <span id="gwBannerTxt">A atualização automática falhou.</span>
+      <a class="btn btn-sm btn-primary" id="gwBannerBtn" href="#" target="_blank" rel="noopener">Ver detalhes ↗</a>
     </div>
     <div id="emptyBanner" class="banner hidden"></div>
 
@@ -217,30 +217,8 @@
       </div>
     </section>
 
-    <footer class="foot muted small">Fonte: SQL Server (vw_faturamento_espetto_cupom, vw_faturamento_villa_lobos_cupom, vw_faturamento_cabofrio_collab_cupom, prod_15_anos_espetto) · atualização automática diária às 15h · tempo real pelo botão "Atualizar dados"</footer>
+    <footer class="foot muted small">Fonte: SQL Server (vw_faturamento_espetto_cupom, vw_faturamento_villa_lobos_cupom, vw_faturamento_cabofrio_collab_cupom, prod_15_anos_espetto) · atualização automática de hora em hora (11h às 23h) · sob demanda pelo botão "Atualizar dados"</footer>
   </main>
-</div>
-
-<!-- ============ VALIDAÇÃO DO GATEWAY (2 ETAPAS) ============ -->
-<div id="gwModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="gwModalTit">
-  <div class="modal-card">
-    <button class="icon-btn modal-close" id="gwClose" aria-label="Fechar">✕</button>
-    <h2 id="gwModalTit">Validar conexão do gateway</h2>
-    <p class="muted small" id="gwModalStatus">—</p>
-    <ol class="gw-steps">
-      <li><b>Abra o Power Automate</b> e entre com a conta do gateway. A Microsoft envia a
-        <b>solicitação da 2ª etapa para o seu celular</b>. Aprove no app Authenticator.</li>
-      <li>Em <b>Conexões</b>, se a conexão do SQL Server ou do fluxo aparecer com
-        <b>"Corrigir conexão"</b>, clique e confirme.</li>
-      <li>Volte aqui e clique em <b>Testar conexão</b>.</li>
-    </ol>
-    <div class="modal-actions">
-      <a class="btn btn-primary" id="gwAbrir" href="https://make.powerautomate.com/connections" target="_blank" rel="noopener">Abrir Power Automate ↗</a>
-      <button class="btn" id="gwTestar">Testar conexão</button>
-    </div>
-    <p class="small muted gw-nota">Por segurança, a senha não fica salva no dashboard. A validação em duas etapas acontece
-      direto na página da Microsoft.</p>
-  </div>
 </div>
 
 <div id="toast" class="toast" role="status"></div>

@@ -1,7 +1,7 @@
 /*
-  Índices por data de venda para a procedure dbo.sp_dashboard_copo15 (consulta pelo gateway).
+  Índices por data de venda para a procedure dbo.sp_dashboard_copo15 (executada pelo runner do GitHub).
   As tabelas eram heaps sem índice: cada chamada lia a tabela inteira (até 11 milhões de linhas)
-  e, com o servidor ocupado, passava do limite de 110 s do gateway.
+  e, com o servidor ocupado, levava minutos.
 
   - Índice não clusterizado comum (não filtrado: índices filtrados fazem falhar inserções de sessões
     com QUOTED_IDENTIFIER OFF, o que poderia quebrar o ETL).

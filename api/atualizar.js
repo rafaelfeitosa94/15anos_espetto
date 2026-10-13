@@ -1,66 +1,81 @@
-// Atualização em tempo real: consulta o SQL Server pelo on-premises data gateway (fluxo do Power Automate)
-// e devolve os dados do dashboard já mesclados com o último snapshot publicado (data/dados.json).
+// Botão "Atualizar dados": dispara o workflow "Atualizar dados" no GitHub, que roda no runner instalado na
+// rede da empresa (SRVTESTE) e consulta o SQL Server. Também informa o andamento/status da última execução.
 //
-//   POST /api/atualizar                 -> consulta os últimos dias (padrão 3) e mescla com o snapshot
-//   POST /api/atualizar?completo=1      -> consulta o período inteiro da ação
-//   POST /api/atualizar?teste=1         -> só testa a conexão (consulta o dia de hoje, parte "vendas")
+//   POST /api/atualizar   -> dispara o workflow (se já houver um em andamento, só devolve o status dele)
+//   GET  /api/atualizar   -> status da execução mais recente
 //
-// Variável de ambiente obrigatória: FLOW_URL (URL do gatilho HTTP do fluxo, com a assinatura sig=...).
-const fs = require('fs');
-const path = require('path');
+// Variáveis de ambiente (Vercel): GH_TOKEN (token fine-grained com "Actions: Read and write" no repositório),
+// GH_REPO (padrão rafaelfeitosa94/15anos_espetto), GH_WORKFLOW (padrão atualizar-dados.yml).
 const { isAuthenticated } = require('../lib/auth');
-const gw = require('../lib/gateway');
 
-const DIAS_AO_VIVO = Number(process.env.DIAS_AO_VIVO || 3);
+const REPO = process.env.GH_REPO || 'rafaelfeitosa94/15anos_espetto';
+const WORKFLOW = process.env.GH_WORKFLOW || 'atualizar-dados.yml';
+const FILA_MAX_MIN = 10; // na fila há mais que isso = runner provavelmente desligado/offline
 
-function isoAdd(iso, n) {
-  const d = new Date(iso + 'T12:00:00Z');
-  d.setUTCDate(d.getUTCDate() + n);
-  return d.toISOString().slice(0, 10);
+async function gh(metodo, rota, corpo) {
+  const r = await fetch(`${process.env.GH_API_URL || 'https://api.github.com'}/repos/${REPO}${rota}`, { // GH_API_URL: só testes
+    method: metodo,
+    headers: {
+      Authorization: `Bearer ${process.env.GH_TOKEN}`,
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      'User-Agent': 'dashboard-copo15',
+      ...(corpo ? { 'Content-Type': 'application/json' } : {}),
+    },
+    body: corpo ? JSON.stringify(corpo) : undefined,
+  });
+  const texto = await r.text();
+  if (!r.ok) {
+    const e = new Error(`GitHub ${r.status}: ${texto.slice(0, 200)}`);
+    e.status = r.status;
+    throw e;
+  }
+  return texto ? JSON.parse(texto) : {};
+}
+
+function resumo(run) {
+  if (!run) return { status: 'sem_execucao' };
+  const minutosNaFila = (Date.now() - new Date(run.created_at).getTime()) / 60000;
+  let status = run.status === 'completed' ? (run.conclusion === 'success' ? 'ok' : 'falhou') : 'executando';
+  if (run.status === 'queued' && minutosNaFila > FILA_MAX_MIN) status = 'runner_offline';
+  return {
+    status,
+    fase: run.status,                 // queued | in_progress | completed
+    conclusao: run.conclusion,        // success | failure | cancelled | null
+    evento: run.event,                // schedule | workflow_dispatch
+    criado_em: run.created_at,
+    atualizado_em: run.updated_at,
+    url: run.html_url,
+    id: run.id,
+  };
+}
+
+async function ultimaExecucao() {
+  const j = await gh('GET', `/actions/workflows/${WORKFLOW}/runs?per_page=1`);
+  return (j.workflow_runs || [])[0];
 }
 
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   if (!isAuthenticated(req)) return res.status(401).json({ ok: false, error: 'não autenticado' });
-  if (req.method !== 'POST') return res.status(405).json({ ok: false });
-
-  const url = process.env.FLOW_URL;
-  if (!url) {
-    return res.status(200).json({ ok: false, gateway: { status: 'nao_configurado', mensagem: 'FLOW_URL não configurada na Vercel' } });
+  if (!process.env.GH_TOKEN) {
+    return res.status(200).json({ ok: false, execucao: { status: 'nao_configurado', mensagem: 'GH_TOKEN não configurado na Vercel' } });
   }
 
-  const root = process.cwd();
-  const q = req.query || Object.fromEntries(new URL(req.url, 'http://x').searchParams);
-  const hoje = gw.hojeSP();
-  let base = null;
-  try { base = JSON.parse(fs.readFileSync(path.join(root, 'data', process.env.DATA_FILE || 'dados.json'), 'utf8')); } catch { /* sem snapshot */ }
-  const periodo = (base && base.periodo) || { inicio: gw.INICIO_ACAO, fim: gw.FIM_ACAO };
-
   try {
-    if (q.teste) {
-      const t = Date.now();
-      await gw.chamarFluxo(url, { inicio: hoje, fim: hoje, parte: 'vendas' }, { tentativas: 1 });
-      return res.status(200).json({ ok: true, gateway: { status: 'ok', em: gw.agoraISO(), ms: Date.now() - t } });
+    if (req.method === 'GET') {
+      return res.status(200).json({ ok: true, execucao: resumo(await ultimaExecucao()) });
     }
+    if (req.method !== 'POST') return res.status(405).json({ ok: false });
 
-    const fim = hoje < periodo.fim ? hoje : periodo.fim;
-    let inicio = q.completo ? periodo.inicio : isoAdd(hoje, -(DIAS_AO_VIVO - 1));
-    if (inicio < periodo.inicio) inicio = periodo.inicio;
-    if (fim < periodo.inicio) {
-      // ação ainda não começou: nada a consultar
-      return res.status(200).json({ ok: true, dados: base, gateway: { status: 'ok', em: gw.agoraISO(), aviso: 'A ação ainda não começou' } });
+    const atual = await ultimaExecucao();
+    if (atual && atual.status !== 'completed') {
+      return res.status(200).json({ ok: true, disparado: false, execucao: resumo(atual) });
     }
-
-    const payloads = await gw.consultarPeriodo(url, inicio, fim, { timeoutMs: 110000, tentativas: 1 });
-    const { dados } = gw.consolidar({
-      lojasCfg: gw.carregarLojas(root), payloads, janela: { inicio, fim }, base, periodo,
-    });
-    dados.gateway = { status: 'ok', em: dados.atualizado_em, janela: { inicio, fim } };
-    return res.status(200).json({ ok: true, dados, gateway: dados.gateway });
+    const disparadoEm = new Date().toISOString();
+    await gh('POST', `/actions/workflows/${WORKFLOW}/dispatches`, { ref: 'main' });
+    return res.status(200).json({ ok: true, disparado: true, disparado_em: disparadoEm, execucao: { status: 'executando', fase: 'queued' } });
   } catch (e) {
-    return res.status(200).json({
-      ok: false,
-      gateway: { status: e.tipo || 'erro', mensagem: String(e.message || e).slice(0, 300), em: gw.agoraISO() },
-    });
+    return res.status(200).json({ ok: false, execucao: { status: 'erro', mensagem: String(e.message).slice(0, 300) } });
   }
 };

@@ -110,91 +110,114 @@
     return r.json();
   }
 
-  // Atualizar: consulta ao vivo pelo gateway (/api/atualizar); se o gateway não estiver
-  // configurado, recarrega o último snapshot publicado (/api/data).
+  // Atualizar: dispara o workflow no GitHub, que roda no servidor da rede (runner) e consulta o SQL Server.
+  // O dashboard acompanha a execução e recarrega quando a nova versão dos dados estiver publicada.
+  const espera = (ms) => new Promise(r => setTimeout(r, ms));
+  let atualizando = false;
+
   async function refresh() {
+    if (atualizando) { toast('Atualização já em andamento…'); return; }
     const btn = $('btnRefresh');
+    atualizando = true;
     btn.disabled = true;
     $('refreshIco').classList.add('spin');
-    toast('Consultando o banco pelo gateway… pode levar até 1 minuto');
+    const antes = DATA && DATA.atualizado_em;
     try {
       const r = await fetch('/api/atualizar', { method: 'POST', credentials: 'same-origin', cache: 'no-store' });
       if (r.status === 401) { showLogin(); throw new Error('Sessão expirada'); }
       const j = await r.json().catch(() => ({}));
-      if (j.ok && j.dados) {
-        DATA = j.dados;
-        indexData();
-        setGateway(j.gateway);
-        render();
-        toast('Dados atualizados em tempo real: ' + fmtStamp(DATA.atualizado_em));
-      } else {
-        const st = (j.gateway && j.gateway.status) || 'erro';
-        DATA = await loadData();
-        indexData();
-        if (st !== 'nao_configurado') setGateway(j.gateway);
-        render();
-        toast(st === 'nao_configurado'
-          ? 'Gateway ainda não configurado: exibindo a última atualização publicada (' + fmtStamp(DATA.atualizado_em) + ')'
-          : 'Não foi possível consultar o gateway: exibindo a última atualização publicada');
+      const ex = j.execucao || {};
+      if (!j.ok || ex.status === 'nao_configurado') {
+        DATA = await loadData(); indexData(); render();
+        setExecucao(ex.status === 'nao_configurado' ? null : ex);
+        toast(ex.status === 'nao_configurado'
+          ? 'Atualização sob demanda ainda não configurada: exibindo a última versão publicada'
+          : 'Não foi possível acionar o servidor: ' + (ex.mensagem || 'erro'));
+        return;
       }
+      toast(j.disparado ? 'Atualização solicitada ao servidor. Leva de 2 a 4 minutos…' : 'Já existe uma atualização em andamento. Acompanhando…');
+      setExecucao({ status: 'executando', fase: 'queued' });
+
+      // 1) acompanha o workflow (até 15 min)
+      let final = null;
+      for (let i = 0; i < 60 && !final; i++) {
+        await espera(15000);
+        const s = await fetch('/api/atualizar', { credentials: 'same-origin', cache: 'no-store' }).then(x => x.json()).catch(() => null);
+        if (!s || !s.execucao) continue;
+        setExecucao(s.execucao);
+        if (s.execucao.status === 'runner_offline') { final = s.execucao; break; }
+        if (s.execucao.fase === 'completed' && (!j.disparado || new Date(s.execucao.criado_em) >= new Date(j.disparado_em) - 60000)) final = s.execucao;
+      }
+      if (!final || final.status !== 'ok') {
+        toast(final && final.status === 'runner_offline'
+          ? 'O servidor de atualização parece desligado: a execução está na fila'
+          : 'A atualização não terminou com sucesso: veja o aviso no topo');
+        return;
+      }
+      // 2) espera a Vercel publicar a nova versão dos dados (até 5 min)
+      toast('Dados consultados! Publicando a nova versão…');
+      for (let i = 0; i < 20; i++) {
+        const novo = await loadData();
+        if (!antes || novo.atualizado_em !== antes) {
+          DATA = novo; indexData(); render();
+          toast('Dados atualizados: ' + fmtStamp(DATA.atualizado_em));
+          return;
+        }
+        await espera(15000);
+      }
+      toast('Consulta concluída, mas a publicação está demorando. Recarregue a página em instantes.');
     } catch (e) {
       toast(e.message);
     } finally {
+      atualizando = false;
       btn.disabled = false;
       $('refreshIco').classList.remove('spin');
     }
   }
 
-  /* ---------------- gateway ---------------- */
-  const GW_MSG = {
-    ok: 'Gateway conectado',
-    reautenticar: 'Reautenticação necessária',
-    gateway_offline: 'Gateway offline',
-    timeout: 'Gateway sem resposta (tempo limite)',
-    erro: 'Falha na última consulta',
-    nao_configurado: 'Gateway não configurado',
+  /* ---------------- status do servidor de atualização (runner) ---------------- */
+  const EX_MSG = {
+    ok: 'Servidor OK',
+    executando: 'Atualizando no servidor…',
+    falhou: 'Última atualização falhou',
+    runner_offline: 'Servidor offline (execução na fila)',
+    erro: 'Não foi possível consultar o status',
+    sem_execucao: 'Servidor: nenhuma execução ainda',
   };
-  let gwState = null;
 
-  function setGateway(g) {
-    if (g) gwState = g;
-    const st = gwState && gwState.status;
+  function setExecucao(ex) {
     const dot = $('gwDot');
-    dot.className = 'gw-dot ' + (st === 'ok' ? 'ok' : !st || st === 'nao_configurado' ? 'idle' : 'warn');
-    $('gwTxt').textContent = (GW_MSG[st] || 'Gateway: sem consulta ainda') +
-      (gwState && gwState.em ? ' · ' + fmtStamp(gwState.em) : '');
-    const alerta = st && !['ok', 'nao_configurado'].includes(st);
-    $('gwBox').classList.toggle('alerta', !!alerta);
-    $('gwBanner').classList.toggle('hidden', !alerta);
-    if (alerta) {
-      $('gwBannerTxt').textContent = st === 'reautenticar'
-        ? '⚠ A conexão com o gateway precisa ser reativada (validação em 2 etapas). Os dados exibidos podem estar desatualizados.'
-        : `⚠ ${GW_MSG[st] || 'Falha no gateway'}. Os dados exibidos são da última atualização bem-sucedida. Se persistir, reative a conexão.`;
+    if (!ex) {
+      dot.className = 'gw-dot idle';
+      $('gwTxt').textContent = 'Atualização automática de hora em hora (11h–23h)';
+      $('gwLink').classList.add('hidden');
+      $('gwBanner').classList.add('hidden');
+      return;
     }
-    $('gwModalStatus').textContent = 'Status atual: ' + (GW_MSG[st] || 'sem consulta ainda') +
-      (gwState && gwState.mensagem ? ' (' + gwState.mensagem.slice(0, 140) + ')' : '');
+    const st = ex.status;
+    dot.className = 'gw-dot ' + (st === 'ok' ? 'ok' : st === 'executando' ? 'run' : st === 'sem_execucao' ? 'idle' : 'warn');
+    const quando = ex.atualizado_em || ex.criado_em;
+    $('gwTxt').textContent = (EX_MSG[st] || st) + (quando && st !== 'executando' ? ' · ' + fmtStamp(quando) : '');
+    $('gwLink').classList.toggle('hidden', !ex.url);
+    if (ex.url) { $('gwLink').href = ex.url; $('gwBannerBtn').href = ex.url; }
+    const alerta = ['falhou', 'runner_offline'].includes(st);
+    $('gwBox').classList.toggle('alerta', alerta);
+    $('gwBanner').classList.toggle('hidden', !alerta);
+    $('gwBannerBtn').classList.toggle('hidden', !ex.url);
+    if (alerta) {
+      $('gwBannerTxt').textContent = st === 'runner_offline'
+        ? '⚠ O servidor de atualização (SRVTESTE) parece desligado ou sem internet: há uma execução na fila há mais de 10 minutos. Os dados exibidos podem estar desatualizados.'
+        : `⚠ A última atualização automática falhou (${fmtStamp(quando)}). Os dados exibidos são da última atualização bem-sucedida.`;
+    }
   }
 
-  function abrirGateway() { setGateway(); $('gwModal').classList.remove('hidden'); }
-  function fecharGateway() { $('gwModal').classList.add('hidden'); }
-
-  async function testarGateway() {
-    const b = $('gwTestar');
-    b.disabled = true;
-    b.textContent = 'Testando…';
+  async function carregarExecucao() {
     try {
-      const r = await fetch('/api/atualizar?teste=1', { method: 'POST', credentials: 'same-origin', cache: 'no-store' });
-      if (r.status === 401) { fecharGateway(); showLogin(); return; }
+      const r = await fetch('/api/atualizar', { credentials: 'same-origin', cache: 'no-store' });
+      if (!r.ok) return;
       const j = await r.json();
-      setGateway(j.gateway);
-      toast(j.ok ? 'Conexão com o gateway OK ✔' : 'Conexão ainda com problema: ' + (GW_MSG[j.gateway.status] || j.gateway.status));
-      if (j.ok) fecharGateway();
-    } catch (e) {
-      toast('Falha ao testar: ' + e.message);
-    } finally {
-      b.disabled = false;
-      b.textContent = 'Testar conexão';
-    }
+      setExecucao(j.execucao && j.execucao.status !== 'nao_configurado' ? j.execucao : null);
+    } catch (e) { /* silencioso */ }
   }
 
   function fmtStamp(s) {
@@ -596,12 +619,6 @@
     $('btnLogout').addEventListener('click', logout);
     $('btnTheme').addEventListener('click', toggleTheme);
     $('btnRefresh').addEventListener('click', refresh);
-    $('btnGateway').addEventListener('click', abrirGateway);
-    $('gwBannerBtn').addEventListener('click', abrirGateway);
-    $('gwClose').addEventListener('click', fecharGateway);
-    $('gwModal').addEventListener('click', e => { if (e.target.id === 'gwModal') fecharGateway(); });
-    $('gwTestar').addEventListener('click', testarGateway);
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharGateway(); });
     $('sbOpen').addEventListener('click', () => $('app').classList.add('sb-on'));
     $('sbClose').addEventListener('click', () => $('app').classList.remove('sb-on'));
     $('sbBackdrop').addEventListener('click', () => $('app').classList.remove('sb-on'));
@@ -648,9 +665,10 @@
     $('login').classList.add('hidden');
     $('app').classList.remove('hidden');
     setupFilters();
-    setGateway(DATA.gateway || null);
+    setExecucao(null);
     render();
-    if (location.hash === '#gateway') abrirGateway(); // link direto para a validação
+    carregarExecucao();
+    setInterval(carregarExecucao, 5 * 60 * 1000); // revisa o status do servidor a cada 5 min
     // re-renderiza quando as fontes da marca terminam de carregar (gráficos medem os rótulos)
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => render());
     if (map) setTimeout(() => map.invalidateSize(), 50);

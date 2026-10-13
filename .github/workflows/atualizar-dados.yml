@@ -1,12 +1,14 @@
-name: Atualizar dados (gateway)
+name: Atualizar dados
 
-# Consulta o SQL Server pelo on-premises data gateway (fluxo do Power Automate),
-# regrava data/dados.json e faz commit — a Vercel publica automaticamente a cada push.
+# Roda no runner do GitHub instalado na rede da empresa (SRVTESTE), que acessa o SQL Server AD01\BARTENDER.
+# Consulta a procedure dbo.sp_dashboard_copo15, regrava data/dados.json e publica pela API do GitHub;
+# a Vercel publica automaticamente a cada commit.
 on:
   schedule:
-    # 15:00 em São Paulo (UTC-3) = 18:00 UTC. O GitHub pode atrasar alguns minutos.
-    - cron: '0 18 * * *'
-  workflow_dispatch:
+    # De hora em hora, das 11h às 23h (São Paulo, UTC-3) = 14h às 02h UTC. O GitHub pode atrasar alguns minutos.
+    - cron: '0 14-23 * * *'
+    - cron: '0 0-2 * * *'
+  workflow_dispatch:   # também é disparado pelo botão "Atualizar dados" do dashboard
     inputs:
       inicio:
         description: 'Data inicial (AAAA-MM-DD). Vazio = início da ação (2026-10-15)'
@@ -24,20 +26,21 @@ concurrency:
 
 jobs:
   atualizar:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+    runs-on: [self-hosted, windows, sqlserver]
+    timeout-minutes: 30
     steps:
       - name: Verificar período da ação
         id: periodo
+        shell: powershell
         run: |
-          hoje=$(TZ=America/Sao_Paulo date +%F)
-          # roda de 15/10 até 01/12 (o dia 30/11 entra no banco no dia seguinte); manual roda sempre
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || { [[ "$hoje" > "2026-10-14" ]] && [[ "$hoje" < "2026-12-02" ]]; }; then
-            echo "rodar=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "Fora do período da ação ($hoje); nada a fazer."
-            echo "rodar=false" >> "$GITHUB_OUTPUT"
-          fi
+          $hoje = [System.TimeZoneInfo]::ConvertTimeBySystemTimeZoneId([datetime]::UtcNow, 'E. South America Standard Time').ToString('yyyy-MM-dd')
+          # agenda roda de 15/10 até 01/12 (o dia 30/11 termina de entrar no banco no dia seguinte); manual roda sempre
+          if ('${{ github.event_name }}' -eq 'workflow_dispatch' -or ($hoje -ge '2026-10-15' -and $hoje -le '2026-12-01')) {
+            "rodar=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          } else {
+            Write-Host "Fora do período da ação ($hoje); nada a fazer."
+            "rodar=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          }
 
       - uses: actions/checkout@v4
         if: steps.periodo.outputs.rodar == 'true'
@@ -47,32 +50,14 @@ jobs:
         with:
           node-version: 20
 
-      - name: Consultar gateway e gerar data/dados.json
+      - name: Consultar SQL Server e publicar data/dados.json
         if: steps.periodo.outputs.rodar == 'true'
-        id: consulta
-        continue-on-error: true
+        shell: powershell
         env:
-          FLOW_URL: ${{ secrets.FLOW_URL }}
+          DB_SERVER: ${{ secrets.DB_SERVER }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           INICIO: ${{ github.event.inputs.inicio }}
           FIM: ${{ github.event.inputs.fim }}
-        run: node scripts/atualizar-gateway.js
-
-      - name: Publicar (commit e push)
-        if: steps.periodo.outputs.rodar == 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/dados.json
-          if git diff --cached --quiet; then
-            echo "Sem alterações."
-          else
-            git commit -m "dados: atualização via gateway $(TZ=America/Sao_Paulo date '+%d/%m/%Y %H:%M')"
-            git pull --rebase -X theirs
-            git push
-          fi
-
-      - name: Falhar se o gateway falhou
-        if: steps.consulta.outcome == 'failure'
-        run: |
-          echo "::error::A consulta ao gateway falhou. Veja o aviso no dashboard (pode ser necessário reautenticar a conexão no Power Automate)."
-          exit 1
+        run: node scripts/atualizar-sql.js

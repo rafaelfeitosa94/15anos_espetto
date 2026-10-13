@@ -5,23 +5,24 @@ Monitoramento da ação de 15/10 a 30/11/2026: cada comanda acima de **R$ 250,00
 ## Como funciona
 
 ```
-                    ┌── botão "Atualizar dados" (tempo real) ──┐
-Dashboard (Vercel) ─┤                                          ├─> Fluxo Power Automate ─> on-premises gateway ─> SQL Server
-                    └── data/dados.json  <── GitHub Actions 15:00 ┘        (FLOW_URL)              dbo.sp_dashboard_copo15
-                                         <── tarefa local 15:00 (plano B: extrator Python)
+GitHub Actions (de hora em hora, 11h–23h, ou botão "Atualizar dados")
+   └─> runner no SRVTESTE (rede da empresa) ─> SQL Server AD01\BARTENDER (dbo.sp_dashboard_copo15)
+          └─> commit de data/dados.json pela API do GitHub ─> Vercel publica o dashboard
 ```
 
 - `public/`: página do dashboard (login, filtros, KPIs, ranking, top 10 produtos, mapa, tema claro/escuro),
   no padrão visual do Manual da Marca Espetto Carioca (imagens em `public/img/`).
 - `api/login.js`: login (cookie HttpOnly assinado, 12h).
-- `api/data.js`: entrega o snapshot `data/dados.json` só para usuários autenticados.
-- `api/atualizar.js`: consulta ao vivo pelo gateway e status da conexão.
-- `lib/gateway.js`: chamada ao fluxo e consolidação (mesmo formato do extrator Python).
-- `sql/sp_dashboard_copo15.sql`: procedure executada pelo gateway; `sql/testar_procedure.py` testa sem criá-la.
-- `.github/workflows/atualizar-dados.yml`: atualização diária às 15:00 pelo gateway.
+- `api/data.js`: entrega `data/dados.json` só para usuários autenticados.
+- `api/atualizar.js`: botão "Atualizar dados" (dispara o workflow) e status do servidor de atualização.
+- `.github/workflows/atualizar-dados.yml`: agenda e execução no runner (`runs-on: [self-hosted, windows, sqlserver]`).
+- `scripts/atualizar-sql.js` + `scripts/exec-sp.ps1`: consulta, consolidação e publicação (rodam no runner).
+- `lib/consolidar.js`: consolidação no formato de `data/dados.json`.
+- `sql/`: procedure `sp_dashboard_copo15`, índices em `dataVenda` e script de teste.
+- `runner/instalar_runner.ps1`: instalação do runner no SRVTESTE.
 - `extrator/`: extrator Python local (plano B), agendado no Windows às 15:00.
 
-Passo a passo do gateway, do fluxo e dos segredos: **[docs/CONFIGURAR_GATEWAY.md](docs/CONFIGURAR_GATEWAY.md)**.
+Instalação do runner, secrets e variáveis: **[docs/CONFIGURAR_RUNNER.md](docs/CONFIGURAR_RUNNER.md)**.
 
 ## Regras de cálculo
 
@@ -50,7 +51,9 @@ Produtos das demais lojas vêm de `prod_15_anos_espetto`.
 | `DASH_USER` | usuário de acesso |
 | `DASH_PASS` | senha de acesso |
 | `AUTH_SECRET` | texto aleatório longo (assinatura do cookie) |
-| `FLOW_URL` | URL do gatilho HTTP do fluxo do Power Automate (também como *secret* no GitHub) |
+| `GH_TOKEN` | token fine-grained com *Actions: Read and write* no repositório (botão "Atualizar dados") |
+
+Secrets do GitHub Actions: `DB_SERVER` (`ad01,1433`), `DB_USER`, `DB_PASSWORD`.
 
 ## Rodar localmente
 
@@ -60,5 +63,5 @@ node dev-server.js
 
 ## Atualização manual
 
-Clique em **Atualizar dados** no dashboard (consulta ao vivo pelo gateway), rode o workflow manualmente no GitHub
-(*Actions → Atualizar dados (gateway) → Run workflow*) ou execute `extrator\atualizar.bat` (plano B local).
+Clique em **Atualizar dados** no dashboard, rode o workflow manualmente no GitHub
+(*Actions → Atualizar dados → Run workflow*) ou execute `extrator\atualizar.bat` (plano B local).
