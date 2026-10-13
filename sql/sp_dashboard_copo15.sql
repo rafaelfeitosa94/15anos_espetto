@@ -7,16 +7,13 @@
   As três partes são chamadas em paralelo, em blocos de 7 dias. As tabelas de origem têm índice em
   dataVenda (sql/indices_dataVenda.sql); OPTION (RECOMPILE) faz o otimizador usar as datas reais.
 
-  Regras (iguais às do extrator Python):
-  - Espetto: comandas de bd_vendas_v3 (valor = valLiquido - valAcrescimo por comanda);
-    taxa de serviço e cortesias somadas apenas no total do dia (a vw_faturamento_espetto_cupom
-    repete esses valores em cada comanda).
-  - Villa Lobos: vw_faturamento_villa_lobos_cupom (comandas e produtos).
-  - Cabo Frio Collab: mesma lógica da vw_faturamento_cabofrio_collab_cupom (serviço e cortesia por comanda),
-    aplicada direto nas tabelas da base Mané com filtro de data (a view filtra só no final e fica lenta);
-    produtos da base Mané (loja 13).
-  - Produtos Espetto: mesma lógica da prod_15_anos_espetto (sem o filtro fixo de data).
-  - Comanda conta para o copo quando o valor é MAIOR que @limite.
+  Regras (iguais às views vw_faturamento_espetto_cupom / vw_faturamento_cabofrio_collab_cupom e às views
+  *_ano_anterior, para comparar 2026 x 2025 com a mesma conta):
+  - Faturamento da comanda = consumo (valLiquido - valAcrescimo) + taxa de serviço - cortesias da comanda.
+  - Comanda conta para o copo quando o CONSUMO (sem taxa de serviço) é MAIOR que @limite (todas as lojas).
+  - Espetto: base bd_espetto_2025; Cabo Frio Collab: base bd_mane_2025, loja 13; Villa Lobos: Zig
+    (vw_faturamento_villa_lobos_cupom, valor da comanda sem serviço separado).
+  - Produtos: lógica da prod_15_anos_espetto (Espetto), base Mané loja 13 (Collab) e Zig (Villa Lobos).
 
   SQL Server 2014: sem FOR JSON / STRING_AGG, o JSON é montado com FOR XML PATH.
 */
@@ -40,91 +37,94 @@ DECLARE @ini datetime = @inicio, @fimx datetime = DATEADD(day, 1, CAST(@fim AS d
 DECLARE @limite decimal(14, 2) = 250.00;
 
 IF OBJECT_ID('tempdb..#com') IS NOT NULL DROP TABLE #com;
-IF OBJECT_ID('tempdb..#aj') IS NOT NULL DROP TABLE #aj;
+IF OBJECT_ID('tempdb..#v') IS NOT NULL DROP TABLE #v;
+IF OBJECT_ID('tempdb..#t') IS NOT NULL DROP TABLE #t;
+IF OBJECT_ID('tempdb..#pg') IS NOT NULL DROP TABLE #pg;
 IF OBJECT_ID('tempdb..#ven') IS NOT NULL DROP TABLE #ven;
 IF OBJECT_ID('tempdb..#prod') IS NOT NULL DROP TABLE #prod;
 IF OBJECT_ID('tempdb..#lj') IS NOT NULL DROP TABLE #lj;
 IF OBJECT_ID('tempdb..#pd') IS NOT NULL DROP TABLE #pd;
 
-CREATE TABLE #com (loja nvarchar(150), data date, valor decimal(16, 2));
-CREATE TABLE #aj (loja nvarchar(150), data date, valor decimal(16, 2));
+-- valor = faturamento da comanda (consumo + serviço - cortesia); consumo = base da regra do copo
+CREATE TABLE #com (loja nvarchar(150), data date, valor decimal(16, 2), consumo decimal(16, 2));
+-- comandas/serviço/cortesia por comanda (Espetto e Mané); chaves em varchar(50) para permitir hash join
+CREATE TABLE #v  (base char(1), loja nvarchar(150), cod varchar(50), data date, tipo varchar(50), comanda varchar(50), consumo float);
+CREATE TABLE #t  (base char(1), cod varchar(50), data date, tipo varchar(50), comanda varchar(50), servico float);
+CREATE TABLE #pg (base char(1), cod varchar(50), data date, tipo varchar(50), comanda varchar(50), cortesia float);
 CREATE TABLE #prod (loja nvarchar(150), data date, produto nvarchar(300), qtd decimal(16, 3), valor decimal(16, 2));
 
 IF @parte = 'vendas'
 BEGIN
--- Espetto: valor por comanda
-INSERT #com (loja, data, valor)
-SELECT l.lojas, CAST(v.dataVenda AS date), SUM(v.valLiquido) - SUM(v.valAcrescimo)
+-- Espetto (E) e Cabo Frio Collab / Mané loja 13 (M): mesma lógica da vw_faturamento_espetto_cupom e da
+-- vw_faturamento_cabofrio_collab_cupom (serviço e cortesia somados por comanda), com filtro de data.
+INSERT #v (base, loja, cod, data, tipo, comanda, consumo)
+SELECT 'E', l.lojas, CAST(v.codLoja AS varchar(50)), CAST(v.dataVenda AS date), CAST(v.tipoVenda AS varchar(50)),
+       CAST(v.controle AS varchar(50)), SUM(v.valLiquido) - SUM(v.valAcrescimo)
 FROM bd_espetto_2025.dbo.bd_vendas_v3 v
 JOIN bd_espetto_2025.dbo.BD_LOJAS_DEGUST l ON l.id = v.codLoja
 WHERE v.cancelada = 'N' AND v.dataVenda >= @ini AND v.dataVenda < @fimx
-GROUP BY l.lojas, CAST(v.dataVenda AS date), v.tipoVenda, v.controle
+GROUP BY l.lojas, CAST(v.codLoja AS varchar(50)), CAST(v.dataVenda AS date), CAST(v.tipoVenda AS varchar(50)), CAST(v.controle AS varchar(50))
 OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
 
--- Espetto: taxa de serviço (+) e cortesias (-) do dia
-INSERT #aj (loja, data, valor)
-SELECT l.lojas, CAST(x.dataVenda AS date), SUM(x.valor)
-FROM (
-    SELECT codLoja, dataVenda, SUM(valTaxaServico) AS valor
-    FROM bd_espetto_2025.dbo.BD_TC_V2
-    WHERE cancelada = 'N' AND dataVenda >= @ini AND dataVenda < @fimx
-    GROUP BY codLoja, dataVenda
-    UNION ALL
-    SELECT codLoja, dataVenda, -SUM(valor)
-    FROM bd_espetto_2025.dbo.BD_PAGAMENTOS_V2
-    WHERE receita IN ('cortesia', 'DUO GORMET') AND cancelada = 'N' AND dataVenda >= @ini AND dataVenda < @fimx
-    GROUP BY codLoja, dataVenda
-) x
-JOIN bd_espetto_2025.dbo.BD_LOJAS_DEGUST l ON l.id = x.codLoja
-GROUP BY l.lojas, CAST(x.dataVenda AS date)
+INSERT #v (base, loja, cod, data, tipo, comanda, consumo)
+SELECT 'M', 'MAN CABO FRIO COLLAB', '13', CAST(dataVenda AS date), CAST(tipoVenda AS varchar(50)),
+       CAST(controle AS varchar(50)), SUM(valLiquido) - SUM(valAcrescimo)
+FROM bd_mane_2025.dbo.bd_vendas_v3
+WHERE codLoja = 13 AND cancelada = 'N' AND dataVenda >= @ini AND dataVenda < @fimx
+GROUP BY CAST(dataVenda AS date), CAST(tipoVenda AS varchar(50)), CAST(controle AS varchar(50))
 OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
 
--- Villa Lobos: valor por comanda
-INSERT #com (loja, data, valor)
-SELECT LOJA, DATA, SUM(VALOR)
+INSERT #t (base, cod, data, tipo, comanda, servico)
+SELECT 'E', CAST(codLoja AS varchar(50)), CAST(dataVenda AS date), CAST(tipoVenda AS varchar(50)), CAST(controle AS varchar(50)), SUM(valTaxaServico)
+FROM bd_espetto_2025.dbo.BD_TC_V2
+WHERE cancelada = 'N' AND dataVenda >= @ini AND dataVenda < @fimx
+GROUP BY CAST(codLoja AS varchar(50)), CAST(dataVenda AS date), CAST(tipoVenda AS varchar(50)), CAST(controle AS varchar(50))
+OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
+
+INSERT #t (base, cod, data, tipo, comanda, servico)
+SELECT 'M', '13', CAST(dataVenda AS date), CAST(tipoVenda AS varchar(50)), CAST(controle AS varchar(50)), SUM(valTaxaServico)
+FROM bd_mane_2025.dbo.BD_TC_V2
+WHERE codLoja = 13 AND cancelada = 'N' AND dataVenda >= @ini AND dataVenda < @fimx
+GROUP BY CAST(dataVenda AS date), CAST(tipoVenda AS varchar(50)), CAST(controle AS varchar(50))
+OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
+
+INSERT #pg (base, cod, data, tipo, comanda, cortesia)
+SELECT 'E', CAST(codLoja AS varchar(50)), CAST(dataVenda AS date), CAST(tipoVenda AS varchar(50)), CAST(controle AS varchar(50)), SUM(valor)
+FROM bd_espetto_2025.dbo.BD_PAGAMENTOS_V2
+WHERE receita IN ('cortesia', 'DUO GORMET') AND cancelada = 'N' AND dataVenda >= @ini AND dataVenda < @fimx
+GROUP BY CAST(codLoja AS varchar(50)), CAST(dataVenda AS date), CAST(tipoVenda AS varchar(50)), CAST(controle AS varchar(50))
+OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
+
+INSERT #pg (base, cod, data, tipo, comanda, cortesia)
+SELECT 'M', '13', CAST(dataVenda AS date), CAST(tipoVenda AS varchar(50)), CAST(controle AS varchar(50)), SUM(valor)
+FROM bd_mane_2025.dbo.BD_PAGAMENTOS_V2
+WHERE codLoja = 13 AND receita IN ('cortesia', 'DUO GORMET') AND cancelada = 'N' AND dataVenda >= @ini AND dataVenda < @fimx
+GROUP BY CAST(dataVenda AS date), CAST(tipoVenda AS varchar(50)), CAST(controle AS varchar(50))
+OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
+
+INSERT #com (loja, data, valor, consumo)
+SELECT v.loja, v.data, v.consumo + ISNULL(t.servico, 0) - ISNULL(pg.cortesia, 0), v.consumo
+FROM #v v
+LEFT JOIN #t t ON t.base = v.base AND t.cod = v.cod AND t.data = v.data AND t.tipo = v.tipo AND t.comanda = v.comanda
+LEFT JOIN #pg pg ON pg.base = v.base AND pg.cod = v.cod AND pg.data = v.data AND pg.tipo = v.tipo AND pg.comanda = v.comanda
+OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
+
+-- Villa Lobos (Zig): valor por comanda (sem taxa de serviço separada)
+INSERT #com (loja, data, valor, consumo)
+SELECT LOJA, DATA, SUM(VALOR), SUM(VALOR)
 FROM master.dbo.vw_faturamento_villa_lobos_cupom
 WHERE DATA >= @inicio AND DATA <= @fim
 GROUP BY LOJA, DATA, COMANDAS
 OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
-
--- Cabo Frio Collab: valor por comanda (lógica da vw_faturamento_cabofrio_collab_cupom)
-INSERT #com (loja, data, valor)
-SELECT 'MAN CABO FRIO COLLAB', v.data, v.valor - v.acrescimo + ISNULL(t.servico, 0) - ISNULL(pg.cortesia, 0)
-FROM (
-    SELECT CAST(dataVenda AS date) AS data, tipoVenda, controle,
-           SUM(valLiquido) AS valor, SUM(valAcrescimo) AS acrescimo
-    FROM bd_mane_2025.dbo.bd_vendas_v3
-    WHERE codLoja = 13 AND cancelada = 'N' AND dataVenda >= @ini AND dataVenda < @fimx
-    GROUP BY CAST(dataVenda AS date), tipoVenda, controle
-) v
-LEFT JOIN (
-    SELECT CAST(dataVenda AS date) AS data, tipoVenda, controle, SUM(valTaxaServico) AS servico
-    FROM bd_mane_2025.dbo.BD_TC_V2
-    WHERE codLoja = 13 AND cancelada = 'N' AND dataVenda >= @ini AND dataVenda < @fimx
-    GROUP BY CAST(dataVenda AS date), tipoVenda, controle
-) t ON t.data = v.data AND t.tipoVenda = v.tipoVenda AND t.controle = v.controle
-LEFT JOIN (
-    SELECT CAST(dataVenda AS date) AS data, tipoVenda, controle, SUM(valor) AS cortesia
-    FROM bd_mane_2025.dbo.BD_PAGAMENTOS_V2
-    WHERE codLoja = 13 AND receita IN ('cortesia', 'DUO GORMET') AND cancelada = 'N'
-      AND dataVenda >= @ini AND dataVenda < @fimx
-    GROUP BY CAST(dataVenda AS date), tipoVenda, controle
-) pg ON pg.data = v.data AND pg.tipoVenda = v.tipoVenda AND pg.controle = v.controle
-OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
 END
 
--- Vendas por loja/dia
+-- Vendas por loja/dia: comanda conta para o copo quando o CONSUMO (sem taxa de serviço) é maior que @limite
 SELECT loja, data,
-       SUM(fat) AS fat, SUM(com) AS com, SUM(c250) AS c250, SUM(f250) AS f250
+       SUM(valor) AS fat, COUNT(*) AS com,
+       SUM(CASE WHEN consumo > @limite THEN 1 ELSE 0 END) AS c250,
+       SUM(CASE WHEN consumo > @limite THEN consumo ELSE 0 END) AS f250
 INTO #ven
-FROM (
-    SELECT loja, data, valor AS fat, 1 AS com,
-           CASE WHEN valor > @limite THEN 1 ELSE 0 END AS c250,
-           CASE WHEN valor > @limite THEN valor ELSE 0 END AS f250
-    FROM #com
-    UNION ALL
-    SELECT loja, data, valor, 0, 0, 0 FROM #aj
-) t
+FROM #com
 WHERE loja IS NOT NULL
 GROUP BY loja, data
 OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);

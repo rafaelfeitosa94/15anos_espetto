@@ -20,7 +20,7 @@ GitHub Actions (de hora em hora, 11h–23h, ou botão "Atualizar dados")
 - `lib/consolidar.js`: consolidação no formato de `data/dados.json`.
 - `sql/`: procedure `sp_dashboard_copo15`, índices em `dataVenda` e script de teste.
 - `runner/instalar_runner.ps1`: instalação do runner no SRVTESTE.
-- `extrator/`: extrator Python local (plano B), agendado no Windows às 15:00.
+- `extrator/`: `gerar_ano_anterior.py` (dados de 2025) e o extrator Python antigo (plano B, tarefa desativada).
 
 Instalação do runner, secrets e variáveis: **[docs/CONFIGURAR_RUNNER.md](docs/CONFIGURAR_RUNNER.md)**.
 
@@ -28,21 +28,31 @@ Instalação do runner, secrets e variáveis: **[docs/CONFIGURAR_RUNNER.md](docs
 
 | Indicador | Regra |
 |---|---|
-| Comandas > R$ 250 | soma do valor por comanda (loja + dia + comanda) maior que R$ 250 |
-| Faturamento | consumo das comandas + taxa de serviço – cortesias (mesma fórmula da `vw_faturamento_espetto_cupom`) |
+| Faturamento | soma por comanda de consumo (valLiquido − valAcrescimo) + taxa de serviço − cortesias da comanda (mesma conta das views `vw_faturamento_*_cupom`) |
+| Comandas > R$ 250 | comandas com **consumo** (sem taxa de serviço) maior que R$ 250, em todas as lojas |
 | Comandas | total de comandas distintas |
 | Ticket médio | faturamento ÷ comandas |
 | Copos utilizados | comandas > R$ 250 acumuladas desde 15/10 até a data final do filtro, versus copos enviados à loja |
+| vs 2025 | mesmos indicadores nas **mesmas datas** de 2025 (15/10–30/11/2025), para as lojas selecionadas |
 
-**Villa Lobos** vem de `vw_faturamento_villa_lobos_cupom` (comandas e produtos na mesma consulta).
-**Cabo Frio Collab** usa a lógica da `vw_faturamento_cabofrio_collab_cupom` (valor por comanda já com serviço/cortesia
-da própria comanda; na procedure, aplicada direto nas tabelas do Mané com filtro de data, com resultado idêntico); produtos da
-base do Mané (`bd_mane_2025.dbo.BD_PRODUTOS_V2`, loja 13).
-Produtos das demais lojas vêm de `prod_15_anos_espetto`.
+Fontes: bases `bd_espetto_2025` (Espetto) e `bd_mane_2025` loja 13 (Cabo Frio Collab), Zig (Villa Lobos), pela
+procedure `dbo.sp_dashboard_copo15`.
 
-> A `vw_faturamento_espetto_cupom` soma a taxa de serviço e as cortesias **do dia inteiro** em cada comanda,
-> o que infla o valor individual. Por isso o extrator usa as mesmas tabelas base da view, aplicando serviço/cortesia
-> apenas no total do dia. Configurações no topo de `extrator/atualizar_dados.py` (`LIMITE`, `LIMITE_INCLUI_SERVICO`).
+### Ano anterior (comparação)
+
+Views criadas em `master` (script `sql/views_ano_anterior.sql`), com a mesma estrutura das atuais e filtro de
+15/10/2025 a 30/11/2025:
+
+| View | Origem |
+|---|---|
+| `vw_faturamento_espetto_cupom_ano_anterior` | `vw_faturamento_espetto_cupom` |
+| `vw_faturamento_cabofrio_collab_cupom_ano_anterior` | `vw_faturamento_cabofrio_collab_cupom` |
+| `prod_15_anos_espetto_ano_anterior` | `prod_15_anos_espetto` |
+| `prod_15_anos_cabofrio_collab_ano_anterior` | produtos da base Mané, loja 13 |
+
+Todas têm a coluna extra `VALOR_CONSUMO` (base da regra do copo). Villa Lobos não tem ano anterior, porque a Zig
+começa em 22/01/2026. Os dados de 2025 não mudam: `data/ano_anterior.json` é gerado uma vez com
+`python extrator/gerar_ano_anterior.py`.
 
 ## Variáveis de ambiente na Vercel
 

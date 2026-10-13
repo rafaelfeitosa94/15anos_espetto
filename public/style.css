@@ -382,3 +382,11 @@ button, input, select { font: inherit; color: inherit; }
 .gw-link:hover { text-decoration: underline; }
 .gw-dot.run { background: var(--warn); animation: pulse-run 1.2s infinite; }
 @keyframes pulse-run { 50% { opacity: .35; } }
+
+/* ---------- comparação com o ano anterior ---------- */
+.kpi-aa, .ins-aa { font-size: 12px; font-style: normal; color: var(--muted); display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; }
+.ins-aa { font-size: 11px; }
+.delta { font-weight: 700; font-size: 12px; white-space: nowrap; }
+.delta.up { color: #2e9e5b; }
+.delta.down { color: var(--bad); }
+.delta.zero, .delta.na { color: var(--muted); font-weight: 600; }

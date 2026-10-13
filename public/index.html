@@ -111,6 +111,7 @@
         <span class="kpi-lbl">Comandas &gt; R$ 250</span>
         <strong class="kpi-val" id="kC250">—</strong>
         <span class="kpi-sub" id="kC250s">—</span>
+        <span class="kpi-aa" id="kC250AA"></span>
       </article>
       <article class="kpi">
         <span class="kpi-lbl">Copos utilizados</span>
@@ -122,16 +123,19 @@
         <span class="kpi-lbl">Faturamento</span>
         <strong class="kpi-val" id="kFat">—</strong>
         <span class="kpi-sub" id="kFatS">—</span>
+        <span class="kpi-aa" id="kFatAA"></span>
       </article>
       <article class="kpi">
         <span class="kpi-lbl">Comandas</span>
         <strong class="kpi-val" id="kCom">—</strong>
         <span class="kpi-sub" id="kComS">—</span>
+        <span class="kpi-aa" id="kComAA"></span>
       </article>
       <article class="kpi">
         <span class="kpi-lbl">Ticket médio</span>
         <strong class="kpi-val" id="kTm">—</strong>
         <span class="kpi-sub" id="kTmS">faturamento ÷ comandas</span>
+        <span class="kpi-aa" id="kTmAA"></span>
       </article>
     </section>
 
@@ -150,7 +154,7 @@
         <div class="table-wrap">
           <table class="rank">
             <thead>
-              <tr><th>#</th><th>Loja</th><th class="num">&gt; R$250</th><th class="pct-col">Copos</th><th class="num">Faturamento</th><th class="num">Comandas</th><th class="num">Ticket médio</th><th class="num">Saldo copos</th></tr>
+              <tr><th>#</th><th>Loja</th><th class="num">&gt; R$250</th><th class="pct-col">Copos</th><th class="num">Faturamento</th><th class="num" title="Faturamento comparado ao mesmo período de 2025 (mesmas datas)">vs 2025</th><th class="num">Comandas</th><th class="num">Ticket médio</th><th class="num">Saldo copos</th></tr>
             </thead>
             <tbody id="rankBody"></tbody>
           </table>
@@ -174,6 +178,10 @@
       <article class="card">
       <div class="card-head">
         <h2>Top 10 produtos mais vendidos</h2>
+        <div class="seg" id="prodAnoSeg" title="Comparar com o mesmo período de 2025">
+          <button data-v="atual" class="on">2026</button>
+          <button data-v="aa">2025</button>
+        </div>
         <div class="seg" id="prodSeg">
           <button data-v="q" class="on">Quantidade</button>
           <button data-v="v">Valor</button>
@@ -198,10 +206,10 @@
             <span class="muted small" id="insCity"></span>
           </div>
           <div class="ins-grid">
-            <div class="ins ins-accent"><span>Comandas &gt; R$ 250</span><strong id="iC250">—</strong></div>
-            <div class="ins"><span>Faturamento</span><strong id="iFat">—</strong></div>
-            <div class="ins"><span>Ticket médio</span><strong id="iTm">—</strong></div>
-            <div class="ins"><span>Total de comandas</span><strong id="iCom">—</strong></div>
+            <div class="ins ins-accent"><span>Comandas &gt; R$ 250</span><strong id="iC250">—</strong><em class="ins-aa" id="iC250AA"></em></div>
+            <div class="ins"><span>Faturamento</span><strong id="iFat">—</strong><em class="ins-aa" id="iFatAA"></em></div>
+            <div class="ins"><span>Ticket médio</span><strong id="iTm">—</strong><em class="ins-aa" id="iTmAA"></em></div>
+            <div class="ins"><span>Total de comandas</span><strong id="iCom">—</strong><em class="ins-aa" id="iComAA"></em></div>
           </div>
           <div class="ins-copos">
             <div class="ins-copos-row"><span>Copos utilizados</span><b id="iCopos">—</b></div>

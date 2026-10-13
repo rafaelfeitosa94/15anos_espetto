@@ -30,6 +30,7 @@
     rankBy: 'c250',
     evo: 'fat',
     prod: 'q',
+    prodAno: 'atual', // top 10: 'atual' (2026) ou 'aa' (mesmo período de 2025)
     focus: null, // loja id em destaque no mapa
   };
   let charts = {};
@@ -340,6 +341,61 @@
     return { perLoja, days, prodMap, tot };
   }
 
+  /* ---------------- ano anterior (mesmas datas de 2025) ---------------- */
+  const DIAS_ANO = 365; // 15/10/2025 -> 15/10/2026 (sem 29/02 no intervalo)
+  function aggregateAA() {
+    const AA = DATA.ano_anterior;
+    if (!AA) return null;
+    // Indicadores: compara só até o último dia que já tem dados em 2026 (mesmo número de dias nos dois anos).
+    // Gráfico de evolução: mostra 2025 no período inteiro do filtro, como referência do que vem pela frente.
+    let ultimo = '';
+    for (const v of DATA.vendas) { const d = DATA.dias[v[1]]; if (d > ultimo) ultimo = d; }
+    let fimCmp = ultimo && ultimo < state.fim ? ultimo : state.fim;
+    if (fimCmp < state.ini) fimCmp = state.ini;
+    const ini = isoAdd(state.ini, -DIAS_ANO), fim = isoAdd(fimCmp, -DIAS_ANO), fimGraf = isoAdd(state.fim, -DIAS_ANO);
+    const inDay = AA.dias.map(d => d >= ini && d <= fim);
+    const inGraf = AA.dias.map(d => d >= ini && d <= fimGraf);
+    const perLoja = DATA.lojas.map(() => ({ fat: 0, com: 0, c250: 0, tem: false }));
+    const perDia = new Map(); // data equivalente em 2026 -> totais de 2025
+    for (const [li, di, fat, com, c250] of AA.vendas) {
+      if (!state.lojas.has(li)) continue;
+      const p = perLoja[li];
+      p.tem = true; // a loja já existia no ano anterior
+      if (inGraf[di]) {
+        const k = isoAdd(AA.dias[di], DIAS_ANO);
+        const q = perDia.get(k) || { fat: 0, com: 0, c250: 0 };
+        q.fat += fat; q.com += com; q.c250 += c250;
+        perDia.set(k, q);
+      }
+      if (!inDay[di]) continue;
+      p.fat += fat; p.com += com; p.c250 += c250;
+    }
+    const prodMap = new Map();
+    for (const [li, di, pi, qt, vl] of AA.prod) {
+      if (!inDay[di] || !state.lojas.has(li)) continue;
+      const cur = prodMap.get(pi) || { q: 0, v: 0 };
+      cur.q += qt; cur.v += vl;
+      prodMap.set(pi, cur);
+    }
+    const tot = perLoja.reduce((a, p) => { a.fat += p.fat; a.com += p.com; a.c250 += p.c250; return a; }, { fat: 0, com: 0, c250: 0 });
+    tot.tm = tot.com ? tot.fat / tot.com : 0;
+    perLoja.forEach(p => { p.tm = p.com ? p.fat / p.com : 0; });
+    return { perLoja, perDia, prodMap, tot, ini, fim, parcial: fimCmp < state.fim };
+  }
+
+  // variação % entre o valor atual e o do ano anterior, em HTML
+  function delta(atual, anterior) {
+    if (!anterior) return '<span class="delta na" title="Sem dados no mesmo período de 2025">—</span>';
+    const v = atual / anterior - 1;
+    const cls = Math.abs(v) < 0.005 ? 'zero' : v > 0 ? 'up' : 'down';
+    const seta = cls === 'up' ? '▲' : cls === 'down' ? '▼' : '';
+    return `<span class="delta ${cls}">${seta} ${(v * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%</span>`;
+  }
+  function linhaAA(atual, anterior, fmt, aa) {
+    const ate = aa.parcial ? ` (${fmtDate(aa.ini)} a ${fmtDate(aa.fim)})` : '';
+    return `${delta(atual, anterior)}<span>vs ${fmt(anterior)} em 2025${ate}</span>`;
+  }
+
   // copos usados até a data final do filtro, contando desde o início da ação (estoque é da ação toda)
   function coposUsados(lojaFilter) {
     const fimIdx = DATA.dias.findIndex(d => d > state.fim);
@@ -362,6 +418,7 @@
 
     renderProgress();
     const agg = aggregate();
+    agg.aa = aggregateAA();
     const usados = coposUsados(state.lojas);
     agg.perLoja.forEach(p => {
       p.usados = usados.get(p.l.i) || 0;
@@ -407,7 +464,7 @@
     el.style.background = ratio >= .9 ? cssVar('--bad') : ratio >= .6 ? cssVar('--warn') : cssVar('--ok');
   }
 
-  function renderKpis({ tot, days, perLoja }) {
+  function renderKpis({ tot, days, perLoja, aa }) {
     const usados = perLoja.filter(p => state.lojas.has(p.l.i)).reduce((a, p) => a + p.usados, 0);
     const nDays = days.length || 1;
     $('kC250').textContent = int(tot.c250);
@@ -421,9 +478,14 @@
     $('kCom').textContent = int(tot.com);
     $('kComS').textContent = `média ${int(tot.com / nDays)} / dia`;
     $('kTm').textContent = brl(tot.com ? tot.fat / tot.com : 0);
+    const tm = tot.com ? tot.fat / tot.com : 0;
+    $('kC250AA').innerHTML = aa ? linhaAA(tot.c250, aa.tot.c250, int, aa) : '';
+    $('kFatAA').innerHTML = aa ? linhaAA(tot.fat, aa.tot.fat, brlShort, aa) : '';
+    $('kComAA').innerHTML = aa ? linhaAA(tot.com, aa.tot.com, int, aa) : '';
+    $('kTmAA').innerHTML = aa ? linhaAA(tm, aa.tot.tm, brl, aa) : '';
   }
 
-  function renderRanking({ perLoja }) {
+  function renderRanking({ perLoja, aa }) {
     const key = state.rankBy;
     const rows = perLoja.filter(p => state.lojas.has(p.l.i))
       .map(p => ({ ...p, sort: key === 'pct' ? p.pct : key === 'tm' ? p.tm : p[key] }))
@@ -440,6 +502,7 @@
         <td class="num"><b>${int(p.c250)}</b></td>
         <td><div class="pct-cell"><div class="mini-bar"><div style="width:${Math.min(100, p.pct * 100)}%;background:${color}"></div></div><span>${int(p.usados)}/${int(p.l.copos)}</span></div></td>
         <td class="num">${brlShort(p.fat)}</td>
+        <td class="num">${!aa ? '' : aa.perLoja[p.l.i].tem ? delta(p.fat, aa.perLoja[p.l.i].fat) : '<span class="delta na" title="Loja sem dados no mesmo período de 2025">nova</span>'}</td>
         <td class="num">${int(p.com)}</td>
         <td class="num">${brl(p.tm)}</td>
         <td class="num">${saldoTxt(p)}</td>`;
@@ -448,7 +511,7 @@
       tr.addEventListener('click', () => focusLoja(p.l.i, true));
       body.appendChild(tr);
     });
-    if (!rows.length) body.innerHTML = '<tr><td colspan="8" class="muted">Nenhuma loja selecionada</td></tr>';
+    if (!rows.length) body.innerHTML = '<tr><td colspan="9" class="muted">Nenhuma loja selecionada</td></tr>';
   }
 
   function saldoTxt(p) {
@@ -463,7 +526,7 @@
     Chart.defaults.borderColor = cssVar('--grid');
   }
 
-  function renderEvo({ days }) {
+  function renderEvo({ days, aa }) {
     chartDefaults();
     const key = state.evo;
     const labels = days.map(d => fmtDate(d.d));
@@ -472,10 +535,23 @@
     const fmt = key === 'fat' ? brlShort : int;
     const cfg = {
       type: 'bar',
-      data: { labels, datasets: [{ data: vals, backgroundColor: color, borderRadius: 4, maxBarThickness: 26 }] },
+      data: {
+        labels,
+        datasets: [{ label: '2026', data: vals, backgroundColor: color, borderRadius: 4, maxBarThickness: 26, order: 2 }]
+          .concat(aa ? [{
+            type: 'line', label: '2025 (mesmas datas)', order: 1,
+            data: days.map(d => (aa.perDia.get(d.d) || {})[key] || 0),
+            borderColor: cssVar('--accent-3'), backgroundColor: cssVar('--accent-3'),
+            borderWidth: 2, borderDash: [5, 4], pointRadius: 2, tension: 0.3,
+          }] : []),
+      },
       options: {
         responsive: true, maintainAspectRatio: false, animation: { duration: 300 },
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ' + (key === 'fat' ? brl(c.raw) : int(c.raw)) } } },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: !!aa, position: 'top', align: 'end', labels: { boxWidth: 12, boxHeight: 12, usePointStyle: true } },
+          tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${key === 'fat' ? brl(c.raw) : int(c.raw)}` } },
+        },
         scales: {
           x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkipPadding: 8 } },
           y: { beginAtZero: true, ticks: { callback: v => fmt(v) } },
@@ -486,11 +562,15 @@
     charts.evo = new Chart($('chEvo'), cfg);
   }
 
-  function renderProd({ prodMap }) {
+  function renderProd({ prodMap, aa }) {
     chartDefaults();
     const key = state.prod;
-    const top = [...prodMap.entries()]
-      .map(([pi, o]) => ({ nome: DATA.produtos[pi], q: o.q, v: o.v }))
+    const usarAA = state.prodAno === 'aa' && aa;
+    const fonte = usarAA ? aa.prodMap : prodMap;
+    const nomes = usarAA ? DATA.ano_anterior.produtos : DATA.produtos;
+    $('prodAnoSeg').classList.toggle('hidden', !DATA.ano_anterior);
+    const top = [...fonte.entries()]
+      .map(([pi, o]) => ({ nome: nomes[pi], q: o.q, v: o.v }))
       .sort((a, b) => b[key] - a[key]).slice(0, 10);
     const cfg = {
       type: 'bar',
@@ -498,7 +578,7 @@
         labels: top.map(t => t.nome.length > 24 ? t.nome.slice(0, 23) + '…' : t.nome),
         datasets: [{
           data: top.map(t => t[key]),
-          backgroundColor: top.map((_, i) => i < 3 ? cssVar('--accent') : cssVar('--accent-2')),
+          backgroundColor: top.map((_, i) => usarAA ? cssVar('--accent-3') : i < 3 ? cssVar('--accent') : cssVar('--accent-2')),
           borderRadius: 4, maxBarThickness: 24,
         }],
       },
@@ -543,7 +623,7 @@
     else map.setView([-22.9, -43.2], 6);
   }
 
-  function renderMap({ perLoja, tot }) {
+  function renderMap({ perLoja, tot, aa }) {
     initMap();
     markersLayer.clearLayers();
     const sel = perLoja.filter(p => state.lojas.has(p.l.i) && p.l.lat);
@@ -573,11 +653,18 @@
         }));
       }
     });
-    renderInsights(perLoja, tot);
+    renderInsights(perLoja, tot, aa);
   }
 
-  function renderInsights(perLoja, tot) {
+  function renderInsights(perLoja, tot, aa) {
     const f = state.focus !== null ? perLoja[state.focus] : null;
+    const ref = !aa ? null : f ? (aa.perLoja[f.l.i].tem ? aa.perLoja[f.l.i] : null) : aa.tot;
+    const cur = f || { c250: tot.c250, fat: tot.fat, com: tot.com, tm: tot.com ? tot.fat / tot.com : 0 };
+    const mini = (a, b, fmt) => !aa ? '' : !ref ? '<span class="delta na">loja nova (sem 2025)</span>' : `${delta(a, b)} <span>2025: ${fmt(b)}</span>`;
+    $('iC250AA').innerHTML = mini(cur.c250, ref && ref.c250, int);
+    $('iFatAA').innerHTML = mini(cur.fat, ref && ref.fat, brlShort);
+    $('iTmAA').innerHTML = mini(cur.tm, ref && ref.tm, brl);
+    $('iComAA').innerHTML = mini(cur.com, ref && ref.com, int);
     let usados, copos;
     if (f) {
       $('insScope').textContent = 'Loja selecionada';
@@ -641,6 +728,7 @@
     $('rankBy').addEventListener('change', e => { state.rankBy = e.target.value; render(); });
     $('evoSeg').addEventListener('click', e => segClick(e, 'evo'));
     $('prodSeg').addEventListener('click', e => segClick(e, 'prod'));
+    $('prodAnoSeg').addEventListener('click', e => segClick(e, 'prodAno'));
     $('insReset').addEventListener('click', () => { state.focus = null; render(); });
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
       if (!document.documentElement.getAttribute('data-theme')) applyThemeToWidgets();
