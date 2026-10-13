@@ -11,7 +11,7 @@ SQL Server (ad01\bartender)  ──>  extrator/atualizar_dados.py  ──>  data
                                               GitHub  ──>  Vercel (deploy automático)
 ```
 
-- `public/` – página do dashboard (login, filtros, KPIs, ranking, top 10 produtos, mapa, tema claro/escuro), no padrão visual do Manual da Marca Impettus 2025 (paleta, tipografia, padrões e ilustrações em `public/img/`).
+- `public/` – página do dashboard (login, filtros, KPIs, ranking, top 10 produtos, mapa, tema claro/escuro), no padrão visual do Manual da Marca Espetto Carioca (paleta, tipografia, ícones, grafismos e texturas em `public/img/`).
 - `api/login.js` – login (cookie HttpOnly assinado, 12h).
 - `api/data.js` – entrega `data/dados.json` apenas para usuários autenticados.
 - `extrator/` – script Python que consulta o banco e publica os dados.

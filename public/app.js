@@ -368,7 +368,7 @@
   }
 
   function chartDefaults() {
-    Chart.defaults.font.family = 'Gotham, Montserrat, system-ui, sans-serif';
+    Chart.defaults.font.family = '"Basic Sans", "Nunito Sans", system-ui, sans-serif';
     Chart.defaults.color = cssVar('--muted');
     Chart.defaults.borderColor = cssVar('--grid');
   }

@@ -1,86 +1,89 @@
-/* Paleta institucional Grupo Impettus (Manual da Marca 2025)
-   #1d1d1b preto · #868686 cinza · #db702d laranja (717 C) · #f78400 laranja-amarelo (124 C) · #f6cd46 amarelo · #0071bc azul (641 C) */
+/* Paleta institucional Espetto Carioca (Manual da Marca)
+   #ffef93 (7401 C) · #ffe52f (803 C) · #f78400 (144 C) · #df6100 (Orange 021 C) · #ffb400 (1375 C) · #773413 (1685 C) */
 :root {
-  --brand-black: #1d1d1b;
-  --brand-gray: #868686;
-  --brand-orange: #db702d;
-  --brand-orange-2: #f78400;
-  --brand-yellow: #f6cd46;
-  --brand-blue: #0071bc;
-  --brand-gradient: linear-gradient(120deg, #db702d 0%, #f78400 55%, #f6cd46 100%);
+  --brand-yellow-light: #ffef93;
+  --brand-yellow: #ffe52f;
+  --brand-orange: #f78400;
+  --brand-orange-dark: #df6100;
+  --brand-amber: #ffb400;
+  --brand-brown: #773413;
+  --brand-gradient: linear-gradient(110deg, #df6100 0%, #f78400 45%, #ffb400 80%, #ffe52f 100%);
 
-  --bg: #f6f5f2;
-  --surface: rgba(255, 255, 255, .92);
+  --bg: #fdf7ec;
+  --surface: rgba(255, 255, 255, .9);
   --surface-solid: #ffffff;
-  --surface-2: #f3f2ef;
-  --border: #e4e2dd;
-  --text: #1d1d1b;
-  --muted: #6e6e6c;
-  --accent: #db702d;
+  --surface-2: #fbf1df;
+  --border: #f0e1c8;
+  --text: #2b1a10;
+  --muted: #8a6a52;
+  --accent: #df6100;
   --accent-2: #f78400;
-  --accent-3: #0071bc;
-  --accent-soft: rgba(219, 112, 45, .10);
-  --ok: #0071bc;
-  --warn: #f78400;
-  --bad: #d63a2f;
-  --grid: rgba(29, 29, 27, .08);
-  --shadow: 0 1px 2px rgba(29,29,27,.05), 0 6px 20px rgba(29,29,27,.06);
+  --accent-3: #773413;
+  --accent-soft: rgba(247, 132, 0, .11);
+  --ok: #773413;
+  --warn: #ffb400;
+  --bad: #d4321c;
+  --grid: rgba(119, 52, 19, .09);
+  --shadow: 0 1px 2px rgba(119,52,19,.06), 0 6px 20px rgba(119,52,19,.07);
   --logo-filter: invert(1);
   --radius: 14px;
-  --bg-doodle: url(img/doodle-escuro.webp);
-  --bg-graf: url(img/grafismos.webp);
-  --impettus-logo: url(img/impettus-preto.png);
-  --bg-op: .07;
+  --bg-icones: url(img/linhas-escuro.webp);
+  --bg-textura-op: .22;
+  --bg-textura-blend: multiply;
+  --bg-icones-op: .06;
+  --espetto-logo: url(img/espetto-preto.png);
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #1d1d1b;
-    --surface: rgba(40, 40, 38, .9);
-    --surface-solid: #282826;
-    --surface-2: #31312e;
-    --border: #3a3a37;
-    --text: #f5f5f3;
-    --muted: #a8a8a5;
-    --accent: #f78400;
-    --accent-2: #f6cd46;
-    --accent-3: #3b9be0;
-    --accent-soft: rgba(247, 132, 0, .14);
-    --ok: #3b9be0;
-    --warn: #f6cd46;
-    --bad: #f0604f;
-    --grid: rgba(255, 255, 255, .08);
-    --shadow: 0 1px 2px rgba(0,0,0,.4);
+    --bg: #1c130d;
+    --surface: rgba(41, 29, 21, .9);
+    --surface-solid: #291d15;
+    --surface-2: #33251b;
+    --border: #45342a;
+    --text: #fff6e6;
+    --muted: #c4ad94;
+    --accent: #ffb400;
+    --accent-2: #f78400;
+    --accent-3: #ffef93;
+    --accent-soft: rgba(255, 180, 0, .14);
+    --ok: #ffef93;
+    --warn: #f78400;
+    --bad: #ff5a3c;
+    --grid: rgba(255, 239, 147, .08);
+    --shadow: 0 1px 2px rgba(0,0,0,.45);
     --logo-filter: none;
-    --bg-doodle: url(img/doodle-claro.webp);
-    --bg-graf: url(img/grafismos-claro.webp);
-    --impettus-logo: url(img/impettus-branco.png);
-    --bg-op: .06;
+    --bg-icones: url(img/linhas-claro.webp);
+    --bg-textura-op: .07;
+    --bg-textura-blend: screen;
+    --bg-icones-op: .05;
+    --espetto-logo: url(img/espetto-branco.png);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #1d1d1b;
-  --surface: rgba(40, 40, 38, .9);
-  --surface-solid: #282826;
-  --surface-2: #31312e;
-  --border: #3a3a37;
-  --text: #f5f5f3;
-  --muted: #a8a8a5;
-  --accent: #f78400;
-  --accent-2: #f6cd46;
-  --accent-3: #3b9be0;
-  --accent-soft: rgba(247, 132, 0, .14);
-  --ok: #3b9be0;
-  --warn: #f6cd46;
-  --bad: #f0604f;
-  --grid: rgba(255, 255, 255, .08);
-  --shadow: 0 1px 2px rgba(0,0,0,.4);
+  --bg: #1c130d;
+  --surface: rgba(41, 29, 21, .9);
+  --surface-solid: #291d15;
+  --surface-2: #33251b;
+  --border: #45342a;
+  --text: #fff6e6;
+  --muted: #c4ad94;
+  --accent: #ffb400;
+  --accent-2: #f78400;
+  --accent-3: #ffef93;
+  --accent-soft: rgba(255, 180, 0, .14);
+  --ok: #ffef93;
+  --warn: #f78400;
+  --bad: #ff5a3c;
+  --grid: rgba(255, 239, 147, .08);
+  --shadow: 0 1px 2px rgba(0,0,0,.45);
   --logo-filter: none;
-  --bg-doodle: url(img/doodle-claro.webp);
-  --bg-graf: url(img/grafismos-claro.webp);
-  --impettus-logo: url(img/impettus-branco.png);
-  --bg-op: .06;
+  --bg-icones: url(img/linhas-claro.webp);
+  --bg-textura-op: .07;
+  --bg-textura-blend: screen;
+  --bg-icones-op: .05;
+  --espetto-logo: url(img/espetto-branco.png);
   color-scheme: dark;
 }
 
@@ -89,13 +92,14 @@ html, body { margin: 0; }
 body {
   background: var(--bg);
   color: var(--text);
-  font: 14px/1.45 Gotham, Montserrat, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font: 14px/1.45 "Basic Sans", "Nunito Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 .hidden { display: none !important; }
 .muted { color: var(--muted); }
 .small { font-size: 12px; }
-h1, h2, h3, .kpi-lbl, .sb-block h3 { margin: 0; letter-spacing: .01em; font-family: "Century Gothic", CenturyGothic, Questrial, "Didact Gothic", sans-serif; }
+h1, h2, h3 { margin: 0; font-family: Gobold, "Bebas Neue", Oswald, sans-serif; font-weight: 400; letter-spacing: .02em; text-transform: uppercase; }
+.kpi-lbl, .sb-block h3 { letter-spacing: .06em; }
 button, input, select { font: inherit; color: inherit; }
 .logo { filter: var(--logo-filter); display: block; }
 
@@ -124,12 +128,12 @@ button, input, select { font: inherit; color: inherit; }
   position: relative; overflow: hidden; isolation: isolate;
   background: var(--brand-gradient);
 }
-/* fundo do login: padrão de raios + ilustração da marca, com pouca visibilidade */
+/* fundo do login: foto do Rio ao pôr do sol + ícones cariocas do manual, com pouca visibilidade */
 .login::before, .login::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; }
-.login::before { background: url(img/raios.webp) center / cover; opacity: .25; mix-blend-mode: soft-light; }
+.login::before { background: url(img/rio-por-do-sol.webp) center / cover; opacity: .28; mix-blend-mode: multiply; }
 .login::after {
-  background: url(img/doodle-claro.webp) right -60px center / auto 115% no-repeat,
-              url(img/doodle-claro.webp) left -120px center / auto 115% no-repeat;
+  background: url(img/icones-claro.webp) right -80px center / auto 95% no-repeat,
+              url(img/icones-claro.webp) left -140px center / auto 95% no-repeat;
   opacity: .10;
 }
 .login-card {
@@ -147,7 +151,7 @@ button, input, select { font: inherit; color: inherit; }
   outline: none;
 }
 .login-card input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-.login-brand { height: 26px; background: var(--impettus-logo) center / contain no-repeat; margin-top: 4px; opacity: .85; }
+.login-brand { height: 26px; background: var(--espetto-logo) center / contain no-repeat; margin-top: 4px; opacity: .85; }
 .login-err { color: var(--bad); min-height: 18px; margin: 0; font-size: 13px; text-align: center; }
 
 /* ---------- layout ---------- */
@@ -182,20 +186,25 @@ button, input, select { font: inherit; color: inherit; }
 .loja-item:hover { background: var(--surface-2); }
 .loja-item input { accent-color: var(--accent); width: 15px; height: 15px; margin: 0; }
 .loja-item .uf { margin-left: auto; font-size: 11px; color: var(--muted); }
-.sb-brand { height: 28px; background: var(--impettus-logo) center / contain no-repeat; opacity: .8; margin-top: 4px; }
+.sb-brand { height: 28px; background: var(--espetto-logo) center / contain no-repeat; opacity: .8; margin-top: 4px; }
 .sb-foot { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--border); padding-top: 14px; }
 .sb-foot-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .upd { font-size: 12px; text-align: center; margin: 0; }
 .sb-backdrop { display: none; }
 
 .main { flex: 1; min-width: 0; padding: 20px 24px 28px; display: flex; flex-direction: column; gap: 18px; position: relative; isolation: isolate; }
-/* fundo do painel: ilustração e grafismos da marca, quase transparentes */
+/* fundo do painel: ilustrações em traço do manual, quase transparentes */
 .app { position: relative; }
 .app::before {
-  content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: var(--bg-op);
+  content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
   background:
-    var(--bg-doodle) right -80px top 40px / 520px auto no-repeat,
-    var(--bg-graf) left 200px bottom -160px / 900px auto no-repeat;
+    var(--bg-icones) right -60px bottom -40px / 900px auto no-repeat;
+  opacity: var(--bg-icones-op);
+}
+/* textura fotográfica do manual (sombra de palmeira) bem suave */
+.app::after {
+  content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: url(img/palmeira-sombra.webp) center / cover no-repeat; opacity: var(--bg-textura-op); mix-blend-mode: var(--bg-textura-blend);
 }
 .app > .main { z-index: 1; }
 .sidebar { z-index: 2; }
@@ -207,17 +216,19 @@ button, input, select { font: inherit; color: inherit; }
 }
 .topbar::before {
   content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
-  background: url(img/raios.webp) center / 900px auto repeat-x; opacity: .45; mix-blend-mode: soft-light;
+  background: url(img/rio-bike.webp) right 240px center / auto 170% no-repeat; opacity: .28; mix-blend-mode: multiply;
+  -webkit-mask-image: linear-gradient(90deg, transparent 55%, #000 72%, #000 80%, transparent 95%);
+          mask-image: linear-gradient(90deg, transparent 55%, #000 72%, #000 80%, transparent 95%);
 }
 .topbar::after {
   content: ""; position: absolute; right: 250px; top: -30px; bottom: -30px; width: 260px; z-index: -1; pointer-events: none;
-  background: url(img/doodle-claro.webp) center / cover no-repeat; opacity: .13;
+  background: url(img/linhas-claro.webp) center / cover no-repeat; opacity: .14;
 }
 .topbar .muted { color: rgba(255,255,255,.88); }
 .topbar b { color: #fff; }
 .top-logo { width: 74px; height: auto; filter: none; }
 .top-title { flex: 1; min-width: 0; }
-.top-title h1 { font-size: 22px; font-weight: 800; }
+.top-title h1 { font-size: 30px; line-height: 1; text-shadow: 0 1px 2px rgba(119,52,19,.35); }
 .top-title p { margin: 2px 0 0; font-size: 13px; }
 .sb-open { display: none; color: #fff; }
 .progress-wrap { width: 220px; }
@@ -254,10 +265,10 @@ button, input, select { font: inherit; color: inherit; }
   padding: 16px 18px; box-shadow: var(--shadow); min-width: 0;
 }
 .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
-.card-head h2 { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.card-head h2 { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
 .card-head h2::before {
-  content: ""; width: 10px; height: 18px; background: var(--brand-gradient);
-  clip-path: polygon(62% 0, 0 58%, 42% 58%, 30% 100%, 100% 36%, 56% 36%); flex: 0 0 auto;
+  content: ""; width: 18px; height: 6px; background: var(--brand-gradient); border-radius: 0 2px 2px 0;
+  clip-path: polygon(0 50%, 30% 0, 100% 0, 100% 100%, 30% 100%); flex: 0 0 auto;
 }
 .card-head .select { width: auto; }
 .seg { display: inline-flex; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 3px; }
