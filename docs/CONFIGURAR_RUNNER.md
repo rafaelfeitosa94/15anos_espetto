@@ -2,7 +2,7 @@
 
 ```
 GitHub Actions ── agenda do GitHub: todo dia às 14h40
-      │       ├── tarefa agendada do SRVTESTE: de hora em hora, 11h às 23h (15/10 a 01/12)
+      │       ├── tarefa agendada do SRVTESTE: de hora em hora, 11h40 às 23h40 (15/10 a 01/12)
       │       └── botão "Atualizar dados" do dashboard (Vercel → API do GitHub)
       ▼
 ┌──────────────── rede da empresa ────────────────┐
@@ -80,7 +80,7 @@ powershell -ExecutionPolicy Bypass -File .\agendar_atualizacao.ps1 -Token COLE_O
 
 - Token: o mesmo `GH_TOKEN` da Vercel (permissão *Actions: Read and write*). Fica gravado criptografado em
   `C:\ProgramData\copo15`, acessível só a SYSTEM e administradores.
-- A tarefa `Copo15 - Atualizar dados` roda como SYSTEM das 11h às 23h, de hora em hora, de 15/10 a 01/12, e não
+- A tarefa `Copo15 - Atualizar dados` roda como SYSTEM de hora em hora, nos minutos :40 (11h40 às 23h40), de 15/10 a 01/12, e não
   dispara se já houver uma atualização na fila ou rodando.
 - Log: `C:\ProgramData\copo15\logs\disparo.log`.
 

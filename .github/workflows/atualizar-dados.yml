@@ -6,7 +6,7 @@ name: Atualizar dados
 on:
   schedule:
     # Todo dia às 14h40 (São Paulo, UTC-3) = 17h40 UTC, depois da carga do Fabric. O GitHub pode atrasar alguns minutos.
-    # As execuções de hora em hora (11h às 23h) são disparadas pela tarefa agendada do SRVTESTE
+    # As execuções de hora em hora (11h40 às 23h40) são disparadas pela tarefa agendada do SRVTESTE
     # (runner/agendar_atualizacao.ps1), que não sofre os atrasos do agendador do GitHub.
     - cron: '40 17 * * *'
   workflow_dispatch:   # disparado pela tarefa do SRVTESTE e pelo botão "Atualizar dados" do dashboard

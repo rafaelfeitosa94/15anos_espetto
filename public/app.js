@@ -190,7 +190,7 @@
     const dot = $('gwDot');
     if (!ex) {
       dot.className = 'gw-dot idle';
-      $('gwTxt').textContent = 'Atualização automática de hora em hora (11h–23h)';
+      $('gwTxt').textContent = 'Atualização automática de hora em hora (11h40–23h40)';
       $('gwLink').classList.add('hidden');
       $('gwBanner').classList.add('hidden');
       return;

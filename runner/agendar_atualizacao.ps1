@@ -1,6 +1,6 @@
 ﻿<#
   Cria no SRVTESTE a tarefa agendada "Copo15 - Atualizar dados", que dispara o workflow "Atualizar dados"
-  no GitHub de hora em hora (11h às 23h, de 15/10 a 01/12). O agendamento do próprio GitHub costuma
+  no GitHub de hora em hora, nos minutos :40 (11h40 às 23h40, de 15/10 a 01/12). O agendamento do próprio GitHub costuma
   atrasar ou pular horários; a tarefa local garante a execução. O workflow roda no runner deste servidor.
 
   A tarefa só chama a API do GitHub (HTTPS 443); a consulta ao banco continua sendo feita pelo workflow.
@@ -21,8 +21,8 @@ param(
     [Parameter(Mandatory)][string]$Token,
     [string]$Repo = 'rafaelfeitosa94/15anos_espetto',
     [string]$Workflow = 'atualizar-dados.yml',
-    [string]$Inicio = '11:00',
-    [int]$Horas = 12,               # 11h + 12 repetições = última às 23h
+    [string]$Inicio = '11:40',
+    [int]$Horas = 12,               # 11h40 + 12 repetições = última às 23h40
     [string]$Pasta = 'C:\ProgramData\copo15'
 )
 $ErrorActionPreference = 'Stop'
@@ -79,7 +79,7 @@ try {
 $disparo = $disparo.Replace('__PASTA__', $Pasta).Replace('__REPO__', $Repo).Replace('__WORKFLOW__', $Workflow)
 [IO.File]::WriteAllText("$Pasta\disparar_atualizacao.ps1", $disparo, (New-Object Text.UTF8Encoding $true))
 
-Passo "Criando a tarefa agendada '$Tarefa' (de hora em hora, $Inicio às 23h)"
+Passo "Criando a tarefa agendada '$Tarefa' (de hora em hora, a partir de $Inicio)"
 $acao = New-ScheduledTaskAction -Execute 'powershell.exe' `
     -Argument "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$Pasta\disparar_atualizacao.ps1`""
 $gatilho = New-ScheduledTaskTrigger -Daily -At $Inicio

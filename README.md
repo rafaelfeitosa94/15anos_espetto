@@ -5,7 +5,7 @@ Monitoramento da ação de 15/10 a 30/11/2026: cada comanda acima de **R$ 250,00
 ## Como funciona
 
 ```
-GitHub Actions (tarefa do SRVTESTE de hora em hora 11h–23h, agenda do GitHub às 14h40, ou botão "Atualizar dados")
+GitHub Actions (tarefa do SRVTESTE de hora em hora 11h40–23h40, agenda do GitHub às 14h40, ou botão "Atualizar dados")
    └─> runner no SRVTESTE (rede da empresa) ─> SQL Server AD01\BARTENDER (dbo.sp_dashboard_copo15)
           └─> commit de data/dados.json pela API do GitHub ─> Vercel publica o dashboard
 ```
