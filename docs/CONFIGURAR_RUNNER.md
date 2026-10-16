@@ -72,10 +72,10 @@ O agendador do GitHub atrasa ou pula horários. Por isso, as execuções de hora
 tarefa agendada no próprio SRVTESTE, que chama a API do GitHub. A agenda do GitHub fica só com a execução fixa
 das 14h40.
 
-No SRVTESTE, PowerShell **como administrador**, na pasta onde copiou `runnergendar_atualizacao.ps1`:
+No SRVTESTE, PowerShell **como administrador**, na pasta onde copiou `runner\agendar_atualizacao.ps1`:
 
 ```
-powershell -ExecutionPolicy Bypass -File .gendar_atualizacao.ps1 -Token COLE_O_TOKEN_AQUI
+powershell -ExecutionPolicy Bypass -File .\agendar_atualizacao.ps1 -Token COLE_O_TOKEN_AQUI
 ```
 
 - Token: o mesmo `GH_TOKEN` da Vercel (permissão *Actions: Read and write*). Fica gravado criptografado em
