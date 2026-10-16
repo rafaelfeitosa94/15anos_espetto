@@ -5,10 +5,11 @@ name: Atualizar dados
 # a Vercel publica automaticamente a cada commit.
 on:
   schedule:
-    # De hora em hora, das 11h às 23h (São Paulo, UTC-3) = 14h às 02h UTC. O GitHub pode atrasar alguns minutos.
-    - cron: '0 14-23 * * *'
-    - cron: '0 0-2 * * *'
-  workflow_dispatch:   # também é disparado pelo botão "Atualizar dados" do dashboard
+    # Todo dia às 14h40 (São Paulo, UTC-3) = 17h40 UTC, depois da carga do Fabric. O GitHub pode atrasar alguns minutos.
+    # As execuções de hora em hora (11h às 23h) são disparadas pela tarefa agendada do SRVTESTE
+    # (runner/agendar_atualizacao.ps1), que não sofre os atrasos do agendador do GitHub.
+    - cron: '40 17 * * *'
+  workflow_dispatch:   # disparado pela tarefa do SRVTESTE e pelo botão "Atualizar dados" do dashboard
     inputs:
       inicio:
         description: 'Data inicial (AAAA-MM-DD). Vazio = início da ação (2026-10-15)'

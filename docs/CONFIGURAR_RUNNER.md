@@ -1,7 +1,8 @@
 # Atualização pelo runner do GitHub na rede da empresa
 
 ```
-GitHub Actions ── agenda: de hora em hora, 11h às 23h (15/10 a 01/12)
+GitHub Actions ── agenda do GitHub: todo dia às 14h40
+      │       ├── tarefa agendada do SRVTESTE: de hora em hora, 11h às 23h (15/10 a 01/12)
       │       └── botão "Atualizar dados" do dashboard (Vercel → API do GitHub)
       ▼
 ┌──────────────── rede da empresa ────────────────┐
@@ -64,6 +65,24 @@ Na Vercel (**Settings → Environment Variables**):
 
 Ao clicar em **Atualizar dados**, o dashboard aciona o servidor, mostra o andamento na barra lateral e recarrega
 sozinho quando a nova versão estiver publicada, em cerca de 2 a 4 minutos.
+
+## 3.1. Tarefa agendada de hora em hora no SRVTESTE
+
+O agendador do GitHub atrasa ou pula horários. Por isso, as execuções de hora em hora são disparadas por uma
+tarefa agendada no próprio SRVTESTE, que chama a API do GitHub. A agenda do GitHub fica só com a execução fixa
+das 14h40.
+
+No SRVTESTE, PowerShell **como administrador**, na pasta onde copiou `runnergendar_atualizacao.ps1`:
+
+```
+powershell -ExecutionPolicy Bypass -File .gendar_atualizacao.ps1 -Token COLE_O_TOKEN_AQUI
+```
+
+- Token: o mesmo `GH_TOKEN` da Vercel (permissão *Actions: Read and write*). Fica gravado criptografado em
+  `C:\ProgramData\copo15`, acessível só a SYSTEM e administradores.
+- A tarefa `Copo15 - Atualizar dados` roda como SYSTEM das 11h às 23h, de hora em hora, de 15/10 a 01/12, e não
+  dispara se já houver uma atualização na fila ou rodando.
+- Log: `C:\ProgramData\copo15\logs\disparo.log`.
 
 ## 4. Avisos no dashboard
 
