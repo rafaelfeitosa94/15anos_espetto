@@ -32,7 +32,10 @@ Instalação do runner, secrets e variáveis: **[docs/CONFIGURAR_RUNNER.md](docs
 | Comandas > R$ 250 | comandas com **consumo** (sem taxa de serviço) maior que R$ 250, em todas as lojas |
 | Comandas | total de comandas distintas |
 | Ticket médio | faturamento ÷ comandas |
-| Copos utilizados | comandas > R$ 250 acumuladas desde 15/10 até a data final do filtro, versus copos enviados à loja |
+| Copos entregues | quantidade do item de venda **COPO ESPETTO ANIVER 15** (lançado a R$ 0) nas comandas: produtos do Espetto, da Mané loja 13 (Cabo Frio Collab) e da Zig (Villa Lobos). A Península usa PDV próprio e aparece como "PDV próprio" |
+| Comandas com copo | comandas em que o item do copo foi lançado |
+| Estoque usado | copos entregues acumulados desde 15/10 até a data final do filtro, versus copos enviados à loja |
+| Recarga do banco | as tabelas de vendas são recarregadas várias vezes ao dia; se um dia já fechado vier com bem menos comandas que a versão publicada, o runner espera 4 min e consulta de novo (até 2 vezes) e, se persistir, mantém a versão publicada |
 | vs 2025 | mesmos indicadores nas **mesmas datas** de 2025 (15/10–30/11/2025), para as lojas selecionadas |
 
 Fontes: bases `bd_espetto_2025` (Espetto) e `bd_mane_2025` loja 13 (Cabo Frio Collab), Zig (Villa Lobos), pela

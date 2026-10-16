@@ -1,11 +1,15 @@
 /*
   Procedure usada pelo runner do GitHub (scripts/exec-sp.ps1) para o dashboard "Ação Copo 15 Anos".
   Retorna UMA linha com a coluna [payload] contendo um JSON compacto. Cada chamada traz só uma @parte:
-    'vendas'             comandas, faturamento e comandas acima do limite (todas as lojas)
+    'vendas'             comandas, faturamento, comandas acima do limite e copos entregues (todas as lojas)
     'produtos_espetto'   produtos das lojas Espetto
     'produtos_parceiros' produtos de Villa Lobos e Cabo Frio Collab
   As três partes são chamadas em paralelo, em blocos de 7 dias. As tabelas de origem têm índice em
   dataVenda (sql/indices_dataVenda.sql); OPTION (RECOMPILE) faz o otimizador usar as datas reais.
+
+  Copos entregues: quantidade do item de venda @item ('COPO ESPETTO ANIVER 15', lançado a R$ 0) e número de
+  comandas em que ele foi lançado, por loja/dia, na parte 'vendas'. Fontes: produtos do Espetto, da Mané loja 13
+  (Cabo Frio Collab) e da Zig (Villa Lobos). A Península usa outro PDV e não tem o item no banco.
 
   Regras (iguais às views vw_faturamento_espetto_cupom / vw_faturamento_cabofrio_collab_cupom e às views
   *_ano_anterior, para comparar 2026 x 2025 com a mesma conta):
@@ -35,6 +39,7 @@ BEGIN
 SET NOCOUNT ON;
 DECLARE @ini datetime = @inicio, @fimx datetime = DATEADD(day, 1, CAST(@fim AS datetime));
 DECLARE @limite decimal(14, 2) = 250.00;
+DECLARE @item nvarchar(100) = N'COPO ESPETTO ANIVER 15'; -- item lançado na comanda quando o copo é entregue
 
 IF OBJECT_ID('tempdb..#com') IS NOT NULL DROP TABLE #com;
 IF OBJECT_ID('tempdb..#v') IS NOT NULL DROP TABLE #v;
@@ -44,6 +49,7 @@ IF OBJECT_ID('tempdb..#ven') IS NOT NULL DROP TABLE #ven;
 IF OBJECT_ID('tempdb..#prod') IS NOT NULL DROP TABLE #prod;
 IF OBJECT_ID('tempdb..#lj') IS NOT NULL DROP TABLE #lj;
 IF OBJECT_ID('tempdb..#pd') IS NOT NULL DROP TABLE #pd;
+IF OBJECT_ID('tempdb..#cp') IS NOT NULL DROP TABLE #cp;
 
 -- valor = faturamento da comanda (consumo + serviço - cortesia); consumo = base da regra do copo
 CREATE TABLE #com (loja nvarchar(150), data date, valor decimal(16, 2), consumo decimal(16, 2));
@@ -51,6 +57,8 @@ CREATE TABLE #com (loja nvarchar(150), data date, valor decimal(16, 2), consumo 
 CREATE TABLE #v  (base char(1), loja nvarchar(150), cod varchar(50), data date, tipo varchar(50), comanda varchar(50), consumo float);
 CREATE TABLE #t  (base char(1), cod varchar(50), data date, tipo varchar(50), comanda varchar(50), servico float);
 CREATE TABLE #pg (base char(1), cod varchar(50), data date, tipo varchar(50), comanda varchar(50), cortesia float);
+-- copos entregues por loja/dia: cop = quantidade do item, ccop = comandas com o item
+CREATE TABLE #cp (loja nvarchar(150), data date, cop decimal(16, 3), ccop int);
 CREATE TABLE #prod (loja nvarchar(150), data date, produto nvarchar(300), qtd decimal(16, 3), valor decimal(16, 2));
 
 IF @parte = 'vendas'
@@ -116,18 +124,56 @@ FROM master.dbo.vw_faturamento_villa_lobos_cupom
 WHERE DATA >= @inicio AND DATA <= @fim
 GROUP BY LOJA, DATA, COMANDAS
 OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
+
+-- Copos entregues (item @item, não cancelado)
+INSERT #cp (loja, data, cop, ccop)
+SELECT l.lojas, CAST(p.dataVenda AS date), SUM(p.quantidade),
+       COUNT(DISTINCT CAST(p.codLoja AS varchar(50)) + '|' + CAST(p.tipoVenda AS varchar(50)) + '|' + CAST(p.controle AS varchar(50)))
+FROM bd_espetto_2025.dbo.BD_PRODUTOS_V2 p
+JOIN bd_espetto_2025.dbo.BD_LOJAS_DEGUST l ON l.id = p.codLoja
+WHERE p.cancelado = 'N' AND UPPER(LTRIM(RTRIM(p.descricaoProduto))) = @item
+  AND p.dataVenda >= @ini AND p.dataVenda < @fimx
+GROUP BY l.lojas, CAST(p.dataVenda AS date)
+OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
+
+INSERT #cp (loja, data, cop, ccop)
+SELECT 'MAN CABO FRIO COLLAB', CAST(p.dataVenda AS date), SUM(p.quantidade),
+       COUNT(DISTINCT CAST(p.tipoVenda AS varchar(50)) + '|' + CAST(p.controle AS varchar(50)))
+FROM bd_mane_2025.dbo.BD_PRODUTOS_V2 p
+WHERE p.codLoja = 13 AND p.cancelado = 'N' AND UPPER(LTRIM(RTRIM(p.descricaoProduto))) = @item
+  AND p.dataVenda >= @ini AND p.dataVenda < @fimx
+GROUP BY CAST(p.dataVenda AS date)
+OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
+
+INSERT #cp (loja, data, cop, ccop)
+SELECT LOJA, DATA, SUM(QUANTIDADE), COUNT(DISTINCT COMANDAS)
+FROM master.dbo.vw_faturamento_villa_lobos_cupom
+WHERE DATA >= @inicio AND DATA <= @fim AND UPPER(LTRIM(RTRIM(PRODUTO))) = @item
+GROUP BY LOJA, DATA
+OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
 END
 
 -- Vendas por loja/dia: comanda conta para o copo quando o CONSUMO (sem taxa de serviço) é maior que @limite
 SELECT loja, data,
        SUM(valor) AS fat, COUNT(*) AS com,
        SUM(CASE WHEN consumo > @limite THEN 1 ELSE 0 END) AS c250,
-       SUM(CASE WHEN consumo > @limite THEN consumo ELSE 0 END) AS f250
+       SUM(CASE WHEN consumo > @limite THEN consumo ELSE 0 END) AS f250,
+       CAST(0 AS decimal(16, 3)) AS cop, 0 AS ccop
 INTO #ven
 FROM #com
 WHERE loja IS NOT NULL
 GROUP BY loja, data
 OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
+
+-- junta os copos entregues às vendas do dia (e cria a linha se só houver copo)
+UPDATE v SET cop = c.cop, ccop = c.ccop
+FROM #ven v JOIN (SELECT loja, data, SUM(cop) AS cop, SUM(ccop) AS ccop FROM #cp GROUP BY loja, data) c
+  ON c.loja = v.loja AND c.data = v.data;
+INSERT #ven (loja, data, fat, com, c250, f250, cop, ccop)
+SELECT c.loja, c.data, 0, 0, 0, 0, SUM(c.cop), SUM(c.ccop)
+FROM #cp c
+WHERE c.loja IS NOT NULL AND NOT EXISTS (SELECT 1 FROM #ven v WHERE v.loja = c.loja AND v.data = c.data)
+GROUP BY c.loja, c.data;
 
 IF @parte = 'produtos_espetto'
 -- Produtos Espetto (lógica da prod_15_anos_espetto)
@@ -185,7 +231,8 @@ OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
 SELECT @vendas = STUFF((
     SELECT ',[' + CAST(l.id AS varchar(10)) + ',"' + CONVERT(char(10), v.data, 120) + '",'
          + CONVERT(varchar(30), CAST(v.fat AS decimal(16, 2))) + ',' + CAST(v.com AS varchar(10)) + ','
-         + CAST(v.c250 AS varchar(10)) + ',' + CONVERT(varchar(30), CAST(v.f250 AS decimal(16, 2))) + ']'
+         + CAST(v.c250 AS varchar(10)) + ',' + CONVERT(varchar(30), CAST(v.f250 AS decimal(16, 2))) + ','
+         + CONVERT(varchar(30), CAST(v.cop AS decimal(16, 0))) + ',' + CAST(v.ccop AS varchar(10)) + ']'
     FROM #ven v JOIN #lj l ON l.loja = v.loja
     ORDER BY l.id, v.data FOR XML PATH(''), TYPE).value('.', 'nvarchar(max)'), 1, 1, '')
 OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);

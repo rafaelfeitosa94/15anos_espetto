@@ -27,7 +27,7 @@
   const state = {
     ini: null, fim: null,
     lojas: new Set(),
-    rankBy: 'c250',
+    rankBy: 'cop',
     evo: 'fat',
     prod: 'q',
     prodAno: 'atual', // top 10: 'atual' (2026) ou 'aa' (mesmo período de 2025)
@@ -312,16 +312,17 @@
   function aggregate() {
     const dias = DATA.dias;
     const inDay = dias.map(d => d >= state.ini && d <= state.fim);
-    const perLoja = DATA.lojas.map(l => ({ l, fat: 0, com: 0, c250: 0, fat250: 0 }));
-    const perDay = dias.map(d => ({ d, fat: 0, com: 0, c250: 0 }));
-    // vendas: [loja, dia, faturamento, comandas, comandas>limite, faturamento>limite]
+    const perLoja = DATA.lojas.map(l => ({ l, fat: 0, com: 0, c250: 0, fat250: 0, cop: 0, ccop: 0 }));
+    const perDay = dias.map(d => ({ d, fat: 0, com: 0, c250: 0, cop: 0 }));
+    // vendas: [loja, dia, faturamento, comandas, comandas>limite, faturamento>limite,
+    //          copos entregues (item COPO ESPETTO ANIVER 15), comandas com copo]
     for (const v of DATA.vendas) {
-      const [li, di, fat, com, c250, f250] = v;
+      const [li, di, fat, com, c250, f250, cop = 0, ccop = 0] = v;
       if (!inDay[di] || !state.lojas.has(li)) continue;
       const p = perLoja[li];
-      p.fat += fat; p.com += com; p.c250 += c250; p.fat250 += f250;
+      p.fat += fat; p.com += com; p.c250 += c250; p.fat250 += f250; p.cop += cop; p.ccop += ccop;
       const q = perDay[di];
-      q.fat += fat; q.com += com; q.c250 += c250;
+      q.fat += fat; q.com += com; q.c250 += c250; q.cop += cop;
     }
     // produtos: [loja, dia, produto, qtd, valor]
     const prodMap = new Map();
@@ -335,8 +336,9 @@
     const tot = perLoja.reduce((a, p) => {
       if (!state.lojas.has(p.l.i)) return a;
       a.fat += p.fat; a.com += p.com; a.c250 += p.c250; a.fat250 += p.fat250; a.copos += p.l.copos || 0;
+      a.cop += p.cop; a.ccop += p.ccop;
       return a;
-    }, { fat: 0, com: 0, c250: 0, fat250: 0, copos: 0 });
+    }, { fat: 0, com: 0, c250: 0, fat250: 0, copos: 0, cop: 0, ccop: 0 });
     const days = perDay.filter((_, i) => inDay[i]);
     return { perLoja, days, prodMap, tot };
   }
@@ -396,7 +398,8 @@
     return `${delta(atual, anterior)}<span>vs ${fmt(anterior)} em 2025${ate}</span>`;
   }
 
-  // copos usados até a data final do filtro, contando desde o início da ação (estoque é da ação toda)
+  // copos entregues (item lançado no PDV) até a data final do filtro, contando desde o início da ação
+  // (o estoque é da ação toda)
   function coposUsados(lojaFilter) {
     const fimIdx = DATA.dias.findIndex(d => d > state.fim);
     const lim = fimIdx < 0 ? DATA.dias.length : fimIdx;
@@ -404,7 +407,7 @@
     for (const v of DATA.vendas) {
       if (v[1] >= lim) continue;
       if (lojaFilter && !lojaFilter.has(v[0])) continue;
-      out.set(v[0], (out.get(v[0]) || 0) + v[4]);
+      out.set(v[0], (out.get(v[0]) || 0) + (v[6] || 0));
     }
     return out;
   }
@@ -467,11 +470,12 @@
   function renderKpis({ tot, days, perLoja, aa }) {
     const usados = perLoja.filter(p => state.lojas.has(p.l.i)).reduce((a, p) => a + p.usados, 0);
     const nDays = days.length || 1;
+    $('kCopos').textContent = int(tot.cop);
+    $('kCoposC').textContent = `em ${int(tot.ccop)} comanda${tot.ccop === 1 ? '' : 's'}`;
+    $('kCoposS').textContent = tot.copos ? `Estoque: ${int(usados)} de ${int(tot.copos)} (${pct(usados / tot.copos)}) · saldo ${int(Math.max(0, tot.copos - usados))}` : '—';
+    setBar($('kCoposBar'), tot.copos ? usados / tot.copos : 0);
     $('kC250').textContent = int(tot.c250);
     $('kC250s').textContent = tot.com ? `${pct(tot.c250 / tot.com)} das comandas · ${brlShort(tot.fat250)}` : '—';
-    $('kCopos').textContent = int(usados);
-    $('kCoposS').textContent = tot.copos ? `de ${int(tot.copos)} · ${pct(usados / tot.copos)} do estoque · saldo ${int(Math.max(0, tot.copos - usados))}` : '—';
-    setBar($('kCoposBar'), tot.copos ? usados / tot.copos : 0);
     $('kFat').textContent = brlShort(tot.fat);
     $('kFat').title = brl(tot.fat);
     $('kFatS').textContent = `média ${brlShort(tot.fat / nDays)} / dia`;
@@ -499,8 +503,10 @@
       tr.innerHTML = `
         <td class="pos ${i < 3 ? 'top' : ''}">${i + 1}º</td>
         <td class="loja"></td>
-        <td class="num"><b>${int(p.c250)}</b></td>
+        <td class="num"><b>${semItem(p) || int(p.cop)}</b></td>
+        <td class="num">${semItem(p) ? '—' : int(p.ccop)}</td>
         <td><div class="pct-cell"><div class="mini-bar"><div style="width:${Math.min(100, p.pct * 100)}%;background:${color}"></div></div><span>${int(p.usados)}/${int(p.l.copos)}</span></div></td>
+        <td class="num">${int(p.c250)}</td>
         <td class="num">${brlShort(p.fat)}</td>
         <td class="num">${!aa ? '' : aa.perLoja[p.l.i].tem ? delta(p.fat, aa.perLoja[p.l.i].fat) : '<span class="delta na" title="Loja sem dados no mesmo período de 2025">nova</span>'}</td>
         <td class="num">${int(p.com)}</td>
@@ -511,13 +517,19 @@
       tr.addEventListener('click', () => focusLoja(p.l.i, true));
       body.appendChild(tr);
     });
-    if (!rows.length) body.innerHTML = '<tr><td colspan="9" class="muted">Nenhuma loja selecionada</td></tr>';
+    if (!rows.length) body.innerHTML = '<tr><td colspan="11" class="muted">Nenhuma loja selecionada</td></tr>';
   }
 
   function saldoTxt(p) {
+    if (semItem(p)) return '—';
     const s = (p.l.copos || 0) - p.usados;
     if (s >= 0) return int(s);
-    return `<span class="esgotado" title="Comandas acima do limite além do estoque de copos">esgotado (${int(-s)} a mais)</span>`;
+    return `<span class="esgotado" title="Copos lançados além do estoque enviado à loja">esgotado (${int(-s)} a mais)</span>`;
+  }
+
+  // lojas com PDV próprio (o item do copo não chega ao banco): sem contagem de copos
+  function semItem(p) {
+    return p.l.pdv_externo ? '<span class="delta na" title="Loja com PDV próprio: o item do copo não chega ao banco">PDV próprio</span>' : '';
   }
 
   function chartDefaults() {
@@ -531,14 +543,14 @@
     const key = state.evo;
     const labels = days.map(d => fmtDate(d.d));
     const vals = days.map(d => d[key]);
-    const color = key === 'c250' ? cssVar('--accent') : key === 'fat' ? cssVar('--accent-2') : cssVar('--accent-3');
+    const color = key === 'cop' || key === 'c250' ? cssVar('--accent') : key === 'fat' ? cssVar('--accent-2') : cssVar('--accent-3');
     const fmt = key === 'fat' ? brlShort : int;
     const cfg = {
       type: 'bar',
       data: {
         labels,
         datasets: [{ label: '2026', data: vals, backgroundColor: color, borderRadius: 4, maxBarThickness: 26, order: 2 }]
-          .concat(aa ? [{
+          .concat(aa && key !== 'cop' ? [{
             type: 'line', label: '2025 (mesmas datas)', order: 1,
             data: days.map(d => (aa.perDia.get(d.d) || {})[key] || 0),
             borderColor: cssVar('--accent-3'), backgroundColor: cssVar('--accent-3'),
@@ -549,7 +561,7 @@
         responsive: true, maintainAspectRatio: false, animation: { duration: 300 },
         interaction: { mode: 'index', intersect: false },
         plugins: {
-          legend: { display: !!aa, position: 'top', align: 'end', labels: { boxWidth: 12, boxHeight: 12, usePointStyle: true } },
+          legend: { display: !!aa && key !== 'cop', position: 'top', align: 'end', labels: { boxWidth: 12, boxHeight: 12, usePointStyle: true } },
           tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${key === 'fat' ? brl(c.raw) : int(c.raw)}` } },
         },
         scales: {
@@ -629,9 +641,9 @@
     initMap();
     markersLayer.clearLayers();
     const sel = perLoja.filter(p => state.lojas.has(p.l.i) && p.l.lat);
-    const max = Math.max(1, ...sel.map(p => p.c250));
-    sel.sort((a, b) => b.c250 - a.c250).forEach(p => {
-      const r = 7 + Math.sqrt(p.c250 / max) * 22;
+    const max = Math.max(1, ...sel.map(p => p.cop));
+    sel.sort((a, b) => b.cop - a.cop).forEach(p => {
+      const r = 7 + Math.sqrt(p.cop / max) * 22;
       const color = p.pct >= .9 ? cssVar('--bad') : p.pct >= .6 ? cssVar('--warn') : cssVar('--ok');
       const focused = state.focus === p.l.i;
       const m = L.circleMarker([p.l.lat, p.l.lng], {
@@ -639,19 +651,21 @@
         fillColor: color, fillOpacity: .85,
       });
       m.bindTooltip(`<div class="tt"><b></b>
+        <div><span>Copos entregues</span><span>${p.l.pdv_externo ? 'PDV próprio' : int(p.cop)}</span></div>
+        <div><span>Comandas com copo</span><span>${p.l.pdv_externo ? '—' : int(p.ccop)}</span></div>
         <div><span>Comandas &gt; R$250</span><span>${int(p.c250)}</span></div>
         <div><span>Faturamento</span><span>${brlShort(p.fat)}</span></div>
         <div><span>Ticket médio</span><span>${brl(p.tm)}</span></div>
         <div><span>Total comandas</span><span>${int(p.com)}</span></div>
-        <div><span>Copos</span><span>${int(p.usados)} / ${int(p.l.copos)}</span></div></div>`,
+        <div><span>Estoque usado</span><span>${int(p.usados)} / ${int(p.l.copos)}</span></div></div>`,
         { direction: 'top', offset: [0, -r] });
       m.on('tooltipopen', e => { e.tooltip.getElement().querySelector('b').textContent = p.l.nome; });
       m.on('click', () => focusLoja(p.l.i, false));
       markersLayer.addLayer(m);
-      if (r > 14 && p.c250 > 0) {
+      if (r > 14 && p.cop > 0) {
         markersLayer.addLayer(L.marker([p.l.lat, p.l.lng], {
           interactive: false,
-          icon: L.divIcon({ className: 'map-label', html: int(p.c250), iconSize: [40, 14], iconAnchor: [20, 7] }),
+          icon: L.divIcon({ className: 'map-label', html: int(p.cop), iconSize: [40, 14], iconAnchor: [20, 7] }),
         }));
       }
     });
@@ -668,6 +682,9 @@
     $('iTmAA').innerHTML = mini(cur.tm, ref && ref.tm, brl);
     $('iComAA').innerHTML = mini(cur.com, ref && ref.com, int);
     let usados, copos;
+    const alvo = f || tot;
+    $('iCop').textContent = f && f.l.pdv_externo ? 'PDV próprio' : int(alvo.cop);
+    $('iCcop').textContent = f && f.l.pdv_externo ? '—' : int(alvo.ccop);
     if (f) {
       $('insScope').textContent = 'Loja selecionada';
       $('insTitle').textContent = f.l.nome;

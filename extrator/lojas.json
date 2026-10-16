@@ -297,7 +297,8 @@
   "endereco": "Av. Flamboyants da Península, 855 – LJ 112",
   "copos": 100,
   "lat": -22.9897,
-  "lng": -43.3513
+  "lng": -43.3513,
+  "pdv_externo": true
  },
  {
   "codigo": "MAN CABO FRIO COLLAB",

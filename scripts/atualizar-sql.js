@@ -98,8 +98,28 @@ async function publicar(conteudo, mensagem) {
 
   console.log(`Consultando ${inicio} a ${fim} em ${process.env.DB_SERVER}…`);
   const t = Date.now();
-  const payloads = await c.consultarPeriodo(execSP, inicio, fim, { diasPorBloco: 7 });
-  const { dados, ignoradas } = c.consolidar({ lojasCfg: c.carregarLojas(ROOT), payloads, janela: { inicio, fim }, base, periodo });
+  const lojasCfg = c.carregarLojas(ROOT);
+  const consultar = async () => c.consolidar({
+    lojasCfg, payloads: await c.consultarPeriodo(execSP, inicio, fim, { diasPorBloco: 7 }), janela: { inicio, fim }, base, periodo,
+  });
+  let { dados, ignoradas } = await consultar();
+
+  // Proteção contra a recarga das tabelas de vendas no banco (acontece várias vezes ao dia): se dias já
+  // fechados vierem com bem menos comandas que a versão publicada, espera e consulta de novo; se persistir,
+  // mantém a versão publicada nessas lojas/dias.
+  const ESPERA = Number(process.env.ESPERA_RECARGA_SEG || 240) * 1000;
+  for (let tentativa = 1; tentativa <= 3; tentativa++) {
+    const suspeitos = c.quedasSuspeitas(base, dados, hoje);
+    if (!suspeitos.length) break;
+    const resumo = suspeitos.slice(0, 5).map(s => `${lojasCfg[s.li].codigo} ${s.dia}: ${s.antes}→${s.agora}`).join('; ');
+    if (tentativa === 3) {
+      console.log(`::warning::Banco possivelmente em recarga; mantida a versão publicada em ${c.preservarBase(dados, suspeitos)} loja(s)/dia(s) (${resumo}).`);
+      break;
+    }
+    console.log(`Queda suspeita em ${suspeitos.length} loja(s)/dia(s) (${resumo}). Banco em recarga? Nova consulta em ${ESPERA / 1000}s…`);
+    await new Promise(r => setTimeout(r, ESPERA));
+    ({ dados, ignoradas } = await consultar());
+  }
   dados.execucao = {
     status: 'ok', em: dados.atualizado_em, janela: { inicio, fim },
     runner: process.env.RUNNER_NAME || os.hostname(), evento: process.env.GITHUB_EVENT_NAME || 'manual',
@@ -107,7 +127,8 @@ async function publicar(conteudo, mensagem) {
   const conteudo = JSON.stringify(dados);
   fs.writeFileSync(ARQ, conteudo);
   if (ignoradas.length) console.log('Lojas fora da ação (ignoradas):', ignoradas.join(', '));
-  console.log(`Consulta OK em ${((Date.now() - t) / 1000).toFixed(1)}s: ${dados.vendas.length} linhas de vendas, ${dados.prod.length} de produtos.`);
+  const copos = dados.vendas.reduce((a, v) => a + (v[6] || 0), 0);
+  console.log(`Consulta OK em ${((Date.now() - t) / 1000).toFixed(1)}s: ${dados.vendas.length} linhas de vendas, ${dados.prod.length} de produtos, ${copos} copos entregues.`);
 
   if (process.env.SEM_PUBLICAR) return;
   await publicar(conteudo, `dados: atualização ${hoje.split('-').reverse().join('/')} ${dados.atualizado_em.slice(11, 16)} (runner)`);

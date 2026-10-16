@@ -250,6 +250,7 @@ button, input, select { font: inherit; color: inherit; }
 .kpi-lbl { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
 .kpi-val { font-size: clamp(19px, 1.75vw, 26px); font-weight: 800; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 .kpi-sub { font-size: 12px; color: var(--muted); }
+.kpi-sub.kpi-strong { color: var(--text); font-weight: 700; }
 .kpi-accent { border-color: var(--accent); background: linear-gradient(180deg, var(--accent-soft), var(--surface) 80%), var(--surface-solid); }
 .kpi { position: relative; overflow: hidden; }
 .kpi::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--border); }
@@ -314,6 +315,8 @@ button, input, select { font: inherit; color: inherit; }
 .ins-accent { border-color: var(--accent); background: var(--accent-soft); }
 .ins-accent strong { color: var(--accent); font-size: 24px; }
 .ins-copos-row { display: flex; justify-content: space-between; font-size: 13px; }
+.ins-copos-main { font-size: 15px; }
+.ins-copos-main b { color: var(--accent); font-size: 18px; }
 .legend { list-style: none; padding: 0; margin: auto 0 0; display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
 .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; vertical-align: -1px; }
 .leaflet-container { background: var(--surface-2); font: inherit; }
