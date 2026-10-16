@@ -357,11 +357,13 @@
     const ini = isoAdd(state.ini, -DIAS_ANO), fim = isoAdd(fimCmp, -DIAS_ANO), fimGraf = isoAdd(state.fim, -DIAS_ANO);
     const inDay = AA.dias.map(d => d >= ini && d <= fim);
     const inGraf = AA.dias.map(d => d >= ini && d <= fimGraf);
-    // Lojas "só faturamento" (so_faturamento): em 2025 só há o faturamento diário (sistema antigo), sem
-    // comandas. Entram no faturamento; ficam fora de comandas, ticket médio e > R$ 250, e a loja é comparada
-    // com 2026 só nos dias que têm dado em 2025.
+    // Lojas em so_faturamento: em parte (ou em todo) o período de 2025 só há o faturamento diário do sistema
+    // antigo, sem comandas (linhas com comandas = 0). Essas lojas são comparadas com 2026 só nas mesmas datas:
+    // faturamento nos dias com dado em 2025; comandas, ticket médio e > R$ 250 nos dias com comandas em 2025.
     const soFat = AA.so_faturamento || {};
-    const perLoja = DATA.lojas.map(l => ({ fat: 0, com: 0, c250: 0, fatTm: 0, tem: false, soFat: soFat[l.codigo] || null, dias: new Set() }));
+    const perLoja = DATA.lojas.map(l => ({
+      fat: 0, com: 0, c250: 0, fatTm: 0, tem: false, soFat: soFat[l.codigo] || null, dias: new Set(), diasCom: new Set(),
+    }));
     const perDia = new Map(); // data equivalente em 2026 -> totais de 2025
     for (const [li, di, fat, com, c250] of AA.vendas) {
       if (!state.lojas.has(li)) continue;
@@ -376,15 +378,20 @@
       if (!inDay[di]) continue;
       p.fat += fat; p.com += com; p.c250 += c250;
       if (com) p.fatTm += fat; // ticket médio só com faturamento que tem comandas
-      p.dias.add(isoAdd(AA.dias[di], DIAS_ANO));
+      const d26 = isoAdd(AA.dias[di], DIAS_ANO);
+      p.dias.add(d26);
+      if (com) p.diasCom.add(d26);
     }
-    // 2026 nas mesmas datas que a loja "só faturamento" tem em 2025
-    perLoja.forEach(p => { p.fat2026 = null; });
-    for (const [li, di, fat] of DATA.vendas) {
+    // 2026 nas mesmas datas que essas lojas têm em 2025
+    perLoja.forEach(p => { p.cmp = p.soFat ? { fat: 0, fatC: 0, com: 0, c250: 0 } : null; });
+    for (const [li, di, fat, com, c250] of DATA.vendas) {
       const p = perLoja[li];
-      if (!p.soFat || !p.dias.has(DATA.dias[di])) continue;
-      p.fat2026 = (p.fat2026 || 0) + fat;
+      if (!p.cmp) continue;
+      const d = DATA.dias[di];
+      if (p.dias.has(d)) p.cmp.fat += fat;
+      if (p.diasCom.has(d)) { p.cmp.fatC += fat; p.cmp.com += com; p.cmp.c250 += c250; }
     }
+    perLoja.forEach(p => { if (p.cmp) p.cmp.tm = p.cmp.com ? p.cmp.fatC / p.cmp.com : 0; });
     const prodMap = new Map();
     for (const [li, di, pi, qt, vl] of AA.prod) {
       if (!inDay[di] || !state.lojas.has(li)) continue;
@@ -540,10 +547,11 @@
     if (!r.tem) return '<span class="delta na" title="Loja sem dados no mesmo período de 2025">nova</span>';
     if (!r.soFat) return delta(p.fat, r.fat);
     if (!r.fat) return '<span class="delta na" title="Sem dados da loja nessas datas em 2025">—</span>';
-    return `<span title="${notaSoFat(r)}">${delta(r.fat2026 || 0, r.fat)}*</span>`;
+    return `<span title="${notaSoFat(r)}">${delta(r.cmp.fat, r.fat)}*</span>`;
   }
   function notaSoFat(r) {
-    return `2025: só faturamento (sistema antigo), de ${fmtDate(r.soFat.de)} a ${fmtDate(r.soFat.ate)}; comparado com 2026 nas mesmas datas`;
+    return `2025: de ${fmtDate(r.soFat.de)} a ${fmtDate(r.soFat.ate)} só há o faturamento (sistema antigo, sem comandas); ` +
+      'a loja é comparada com 2026 nas mesmas datas';
   }
 
   function saldoTxt(p) {
@@ -704,10 +712,19 @@
     const cur = f || { c250: tot.c250, fat: tot.fat, com: tot.com, tm: tot.com ? tot.fat / tot.com : 0 };
     const mini = (a, b, fmt) => !aa ? '' : !ref ? '<span class="delta na">loja nova (sem 2025)</span>' : `${delta(a, b)} <span>2025: ${fmt(b)}</span>`;
     if (ref && ref.soFat) {
-      // loja só com faturamento em 2025: compara o faturamento nas mesmas datas; o resto não existe em 2025
-      const sem = `<span class="delta na" title="${notaSoFat(ref)}">sem comandas em 2025</span>`;
-      $('iFatAA').innerHTML = ref.fat ? `<span title="${notaSoFat(ref)}">${delta(ref.fat2026 || 0, ref.fat)} <span>2025: ${brlShort(ref.fat)} · dados até ${fmtDate(ref.soFat.ate)}</span></span>` : sem;
-      $('iC250AA').innerHTML = sem; $('iTmAA').innerHTML = sem; $('iComAA').innerHTML = sem;
+      // loja com parte de 2025 só no sistema antigo: compara com 2026 nas mesmas datas
+      const nota = notaSoFat(ref);
+      const sem = `<span class="delta na" title="${nota}">sem comandas em 2025</span>`;
+      const obsCom = `comandas desde ${fmtDate([...ref.diasCom].sort()[0])}`; // dd/mm é o mesmo nos dois anos
+      const m = (a, b, fmt, obs) => `<span title="${nota}">${delta(a, b)} <span>2025: ${fmt(b)} · ${obs}</span></span>`;
+      $('iFatAA').innerHTML = ref.fat ? m(ref.cmp.fat, ref.fat, brlShort, 'mesmas datas') : sem;
+      if (ref.com) {
+        $('iComAA').innerHTML = m(ref.cmp.com, ref.com, int, obsCom);
+        $('iC250AA').innerHTML = m(ref.cmp.c250, ref.c250, int, obsCom);
+        $('iTmAA').innerHTML = m(ref.cmp.tm, ref.tm, brl, obsCom);
+      } else {
+        $('iC250AA').innerHTML = sem; $('iTmAA').innerHTML = sem; $('iComAA').innerHTML = sem;
+      }
     } else {
       $('iC250AA').innerHTML = mini(cur.c250, ref && ref.c250, int);
       $('iFatAA').innerHTML = mini(cur.fat, ref && ref.fat, brlShort);

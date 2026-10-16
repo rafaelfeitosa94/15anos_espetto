@@ -4,11 +4,16 @@ tabela diária antiga bd_espetto.dbo.[BD VENDAS] (faturamento e clientes por dia
 
   python extrator/complementar_ano_anterior.py
 
-Hoje: ESP GRANDE RIO (dados de 15/10 a 09/11/2025; de 10/11 a 10/12/2025 a loja não aparece em nenhuma base).
+Hoje:
+  ESP GRANDE RIO        15/10 a 09/11/2025 na BD VENDAS; de 10/11 a 10/12/2025 não aparece em nenhuma base
+                        (entrou no Degust em 11/12/2025).
+  ESP CAXIAS CARREFOUR  15/10 a 05/11/2025 na BD VENDAS; a partir de 06/11/2025 já vem do Degust (com comandas).
+Só entram os dias em que a loja ainda não tem dados do Degust.
 Faturamento = [Faturamento Bruto] - DELIVERY, como na query de referência da BD VENDAS.
-As linhas entram com comandas = 0 e a loja fica listada em "so_faturamento": o dashboard compara só o
-faturamento dela, nos dias que têm dado em 2025, e não a usa em comandas, ticket médio e comandas > R$ 250.
-Pode rodar mais de uma vez: as linhas dessas lojas são substituídas.
+As linhas entram com comandas = 0 e a loja fica listada em "so_faturamento". No dashboard, a loja é comparada
+com 2026 só nas mesmas datas: o faturamento nos dias com dado em 2025, e comandas, ticket médio e > R$ 250
+só nos dias com comandas em 2025 (Degust).
+Pode rodar mais de uma vez: as linhas da BD VENDAS (comandas = 0) dessas lojas são substituídas.
 """
 import datetime as dt
 import json
@@ -19,7 +24,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from atualizar_dados import BASE, ROOT, connect, fetch, load_env, norm  # noqa: E402
 
-LOJAS = ['ESP GRANDE RIO']
+LOJAS = ['ESP GRANDE RIO', 'ESP CAXIAS CARREFOUR']
 FONTE = 'bd_espetto.dbo.[BD VENDAS] (faturamento diário, sem comandas)'
 
 SQL = """
@@ -45,18 +50,21 @@ def main():
     linhas = fetch(cn, sql, (aa['periodo']['inicio'], aa['periodo']['fim'], *LOJAS), 'BD VENDAS')
     cn.close()
 
+    # mantém o que veio do Degust (comandas > 0); remove só o que este script acrescentou antes
+    aa['vendas'] = [v for v in aa['vendas'] if not (v[0] in alvo and v[3] == 0)]
+    com_degust = {(v[0], v[1]) for v in aa['vendas']}
     novas, info = [], {}
     for r in linhas:
         li = idx_loja.get(norm(r.loja))
         d = r.data.isoformat()
-        if li not in alvo or d not in idx_dia or not r.fat:
+        if li not in alvo or d not in idx_dia or not r.fat or (li, idx_dia[d]) in com_degust:
             continue
         novas.append([li, idx_dia[d], round(float(r.fat), 2), 0, 0, 0])
         i = info.setdefault(lojas[li]['codigo'], {'fonte': FONTE, 'de': d, 'ate': d, 'clientes': 0})
         i['de'], i['ate'] = min(i['de'], d), max(i['ate'], d)
         i['clientes'] += int(r.tc or 0)
 
-    aa['vendas'] = sorted([v for v in aa['vendas'] if v[0] not in alvo] + novas, key=lambda v: (v[0], v[1]))
+    aa['vendas'] = sorted(aa['vendas'] + novas, key=lambda v: (v[0], v[1]))
     aa['so_faturamento'] = info
     aa['complementado_em'] = dt.datetime.now().astimezone().isoformat(timespec='seconds')
     arq.write_text(json.dumps(aa, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
