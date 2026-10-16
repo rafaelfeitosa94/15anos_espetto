@@ -20,7 +20,7 @@ GitHub Actions (tarefa do SRVTESTE de hora em hora 11h40–23h40, agenda do GitH
 - `lib/consolidar.js`: consolidação no formato de `data/dados.json`.
 - `sql/`: procedure `sp_dashboard_copo15`, índices em `dataVenda` e script de teste.
 - `runner/instalar_runner.ps1`: instalação do runner no SRVTESTE.
-- `extrator/`: `gerar_ano_anterior.py` (dados de 2025) e o extrator Python antigo (plano B, tarefa desativada).
+- `extrator/`: `gerar_ano_anterior.py` e `complementar_ano_anterior.py` (dados de 2025) e o extrator Python antigo (plano B, tarefa desativada).
 
 Instalação do runner, secrets e variáveis: **[docs/CONFIGURAR_RUNNER.md](docs/CONFIGURAR_RUNNER.md)**.
 
@@ -56,6 +56,12 @@ Views criadas em `master` (script `sql/views_ano_anterior.sql`), com a mesma est
 Todas têm a coluna extra `VALOR_CONSUMO` (base da regra do copo). Villa Lobos não tem ano anterior, porque a Zig
 começa em 22/01/2026. Os dados de 2025 não mudam: `data/ano_anterior.json` é gerado uma vez com
 `python extrator/gerar_ano_anterior.py`.
+
+A Grande Rio só entrou no Degust em 11/12/2025. Para ela, `python extrator/complementar_ano_anterior.py` (rodar
+depois do `gerar_ano_anterior.py`) acrescenta o faturamento diário de 15/10 a 09/11/2025 da tabela antiga
+`bd_espetto.dbo.[BD VENDAS]` ([Faturamento Bruto] - DELIVERY). Essa fonte não tem comandas nem produtos: no
+dashboard a loja é comparada só no faturamento, nas mesmas datas (marcada com *), e fica fora de comandas,
+ticket médio e comandas > R$ 250 de 2025. De 10/11 a 10/12/2025 a loja não aparece em nenhuma base.
 
 ## Variáveis de ambiente na Vercel
 
