@@ -18,41 +18,39 @@ $csb['Application Name'] = 'dashboard-copo15-comandas-runner'
 $sql = @'
 ;WITH consumo_e AS (
     SELECT CAST(v.codLoja AS varchar(50)) AS cod, CAST(v.dataVenda AS date) AS data,
-           CAST(v.tipoVenda AS varchar(50)) AS tipo, CAST(v.controle AS varchar(50)) AS comanda,
+           CAST(v.controle AS varchar(50)) AS comanda,
            SUM(v.valLiquido) - SUM(v.valAcrescimo) AS valor
     FROM bd_espetto_2025.dbo.bd_vendas_v3 v
     WHERE v.cancelada = 'N' AND v.dataVenda >= @inicio AND v.dataVenda < DATEADD(day, 1, @fim)
-    GROUP BY CAST(v.codLoja AS varchar(50)), CAST(v.dataVenda AS date), CAST(v.tipoVenda AS varchar(50)), CAST(v.controle AS varchar(50))
+    GROUP BY CAST(v.codLoja AS varchar(50)), CAST(v.dataVenda AS date), CAST(v.controle AS varchar(50))
 ), copo_e AS (
     SELECT CAST(p.codLoja AS varchar(50)) AS cod, CAST(p.dataVenda AS date) AS data,
-           CAST(p.tipoVenda AS varchar(50)) AS tipo, CAST(p.controle AS varchar(50)) AS comanda,
+           CAST(p.controle AS varchar(50)) AS comanda,
            SUM(p.quantidade) AS copos
     FROM bd_espetto_2025.dbo.BD_PRODUTOS_V2 p
     WHERE p.cancelado = 'N' AND UPPER(LTRIM(RTRIM(p.descricaoProduto))) = @item
       AND p.dataVenda >= @inicio AND p.dataVenda < DATEADD(day, 1, @fim)
-    GROUP BY CAST(p.codLoja AS varchar(50)), CAST(p.dataVenda AS date), CAST(p.tipoVenda AS varchar(50)), CAST(p.controle AS varchar(50))
+    GROUP BY CAST(p.codLoja AS varchar(50)), CAST(p.dataVenda AS date), CAST(p.controle AS varchar(50))
 ), consumo_m AS (
-    SELECT CAST(v.dataVenda AS date) AS data, CAST(v.tipoVenda AS varchar(50)) AS tipo,
-           CAST(v.controle AS varchar(50)) AS comanda,
+    SELECT CAST(v.dataVenda AS date) AS data, CAST(v.controle AS varchar(50)) AS comanda,
            SUM(v.valLiquido) - SUM(v.valAcrescimo) AS valor
     FROM bd_mane_2025.dbo.bd_vendas_v3 v
     WHERE v.codLoja = 13 AND v.cancelada = 'N' AND v.dataVenda >= @inicio AND v.dataVenda < DATEADD(day, 1, @fim)
-    GROUP BY CAST(v.dataVenda AS date), CAST(v.tipoVenda AS varchar(50)), CAST(v.controle AS varchar(50))
+    GROUP BY CAST(v.dataVenda AS date), CAST(v.controle AS varchar(50))
 ), copo_m AS (
-    SELECT CAST(p.dataVenda AS date) AS data, CAST(p.tipoVenda AS varchar(50)) AS tipo,
-           CAST(p.controle AS varchar(50)) AS comanda, SUM(p.quantidade) AS copos
+    SELECT CAST(p.dataVenda AS date) AS data, CAST(p.controle AS varchar(50)) AS comanda, SUM(p.quantidade) AS copos
     FROM bd_mane_2025.dbo.BD_PRODUTOS_V2 p
     WHERE p.codLoja = 13 AND p.cancelado = 'N' AND UPPER(LTRIM(RTRIM(p.descricaoProduto))) = @item
       AND p.dataVenda >= @inicio AND p.dataVenda < DATEADD(day, 1, @fim)
-    GROUP BY CAST(p.dataVenda AS date), CAST(p.tipoVenda AS varchar(50)), CAST(p.controle AS varchar(50))
+    GROUP BY CAST(p.dataVenda AS date), CAST(p.controle AS varchar(50))
 ), comandas AS (
-    SELECT l.lojas AS loja, e.data, e.comanda, CAST(e.valor AS decimal(16,2)) AS valor, CAST(p.copos AS decimal(16,3)) AS copos
-    FROM consumo_e e
-    JOIN copo_e p ON p.cod=e.cod AND p.data=e.data AND p.tipo=e.tipo AND p.comanda=e.comanda
-    JOIN bd_espetto_2025.dbo.BD_LOJAS_DEGUST l ON CAST(l.id AS varchar(50))=e.cod
+    SELECT l.lojas AS loja, p.data, p.comanda, CAST(ISNULL(e.valor, 0) AS decimal(16,2)) AS valor, CAST(p.copos AS decimal(16,3)) AS copos
+    FROM copo_e p
+    LEFT JOIN consumo_e e ON p.cod=e.cod AND p.data=e.data AND p.comanda=e.comanda
+    JOIN bd_espetto_2025.dbo.BD_LOJAS_DEGUST l ON CAST(l.id AS varchar(50))=p.cod
     UNION ALL
     SELECT 'MAN CABO FRIO COLLAB', m.data, m.comanda, CAST(m.valor AS decimal(16,2)), CAST(p.copos AS decimal(16,3))
-    FROM consumo_m m JOIN copo_m p ON p.data=m.data AND p.tipo=m.tipo AND p.comanda=m.comanda
+    FROM copo_m p LEFT JOIN consumo_m m ON p.data=m.data AND p.comanda=m.comanda
     UNION ALL
     SELECT v.LOJA, CAST(v.DATA AS date), CAST(v.COMANDAS AS nvarchar(100)),
            CAST(SUM(v.VALOR) AS decimal(16,2)),
