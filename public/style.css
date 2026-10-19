@@ -355,7 +355,7 @@ button, input, select { font: inherit; color: inherit; }
 .cup-orange { background: #f78400; }
 .cup-red { background: #d4321c; }
 .modal-table-wrap { overflow: auto; min-height: 100px; }
-.modal-table { min-width: 620px; }
+.modal-table { min-width: 850px; }
 .modal-table td { padding: 9px 7px; }
 .cup-value-orange { color: #f78400; }
 .cup-value-red { color: #d4321c; }
