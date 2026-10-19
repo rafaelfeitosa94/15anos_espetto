@@ -4,6 +4,13 @@ name: Atualizar dados
 # Consulta a procedure dbo.sp_dashboard_copo15, regrava data/dados.json e publica pela API do GitHub;
 # a Vercel publica automaticamente a cada commit.
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'lib/consolidar.js'
+      - 'scripts/atualizar-sql.js'
+      - 'scripts/exec-comandas.ps1'
+      - '.github/workflows/atualizar-dados.yml'
   schedule:
     # Todo dia às 14h40 (São Paulo, UTC-3) = 17h40 UTC, depois da carga do Fabric. O GitHub pode atrasar alguns minutos.
     # As execuções de hora em hora (11h40 às 23h40) são disparadas pela tarefa agendada do SRVTESTE
