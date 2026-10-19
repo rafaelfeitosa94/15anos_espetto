@@ -42,7 +42,7 @@ Instalação do runner, secrets e variáveis: **[docs/CONFIGURAR_RUNNER.md](docs
 Fontes: bases `bd_espetto_2025` (Espetto) e `bd_mane_2025` loja 13 (Cabo Frio Collab), Zig (Villa Lobos), pela
 procedure `dbo.sp_dashboard_copo15`.
 
-O detalhe por comanda exige a versão atualizada da procedure em `sql/sp_dashboard_copo15.sql`. Execute esse script uma vez no banco `master` pelo SSMS; as próximas atualizações horárias passarão a publicar também as comandas com copo.
+O runner consulta o detalhe das comandas diretamente nas tabelas de origem, em blocos de datas, sem exigir atualização da procedure no SQL Server.
 
 ### Ano anterior (comparação)
 

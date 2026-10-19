@@ -509,14 +509,17 @@
     $('kTmAA').innerHTML = aa ? linhaAA(tm, aa.tot.tm, brl, aa) : '';
   }
 
-  function abrirDetalheCopos() {
+  let focoRetornoCopos = null;
+  function abrirDetalheCopos(lojaId = null, origem = null) {
     const lojas = new Map(DATA.lojas.map((l, i) => [i, l]));
     const dias = new Map(DATA.dias.map((d, i) => [i, d]));
+    const lojasFiltro = lojaId === null ? state.lojas : new Set([lojaId]);
     const rows = (DATA.comandas_copo || []).filter(([li, di]) =>
-      state.lojas.has(li) && dias.has(di) && dias.get(di) >= state.ini && dias.get(di) <= state.fim
+      lojasFiltro.has(li) && dias.has(di) && dias.get(di) >= state.ini && dias.get(di) <= state.fim
     ).sort((a, b) => b[3] - a[3] || b[1] - a[1]);
     const escape = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
-    $('coposModalSummary').textContent = `${int(rows.length)} comandas · ${state.ini.split('-').reverse().join('/')} a ${state.fim.split('-').reverse().join('/')} · ${state.lojas.size} loja(s)`;
+    $('coposModalTitle').textContent = lojaId === null ? 'Comandas com copo' : `Comandas com copo · ${lojas.get(lojaId)?.nome || 'Loja'}`;
+    $('coposModalSummary').textContent = `${int(rows.length)} comandas · ${state.ini.split('-').reverse().join('/')} a ${state.fim.split('-').reverse().join('/')} · ${lojaId === null ? `${state.lojas.size} loja(s)` : 'loja selecionada'}`;
     $('coposModalRows').innerHTML = rows.map(([li, di, numero, valor, copos]) => {
       const day = dias.get(di) || '';
       const cls = valor >= 500 ? 'cup-value-red' : valor > 250 ? 'cup-value-orange' : '';
@@ -524,13 +527,14 @@
       return `<tr><td>${data}</td><td>${escape(lojas.get(li)?.nome || lojas.get(li)?.codigo || '—')}</td><td>${escape(numero)}</td><td class="num">${int(copos)}</td><td class="num ${cls}"><b>${brl(valor)}</b></td></tr>`;
     }).join('');
     $('coposModalEmpty').classList.toggle('hidden', rows.length > 0);
+    focoRetornoCopos = origem || $('kCoposDrill');
     $('coposModal').classList.remove('hidden');
     $('coposModalClose').focus();
   }
 
   function fecharDetalheCopos() {
     $('coposModal').classList.add('hidden');
-    $('kCoposDrill').focus();
+    (focoRetornoCopos || $('kCoposDrill')).focus();
   }
 
   function renderRanking({ perLoja, aa }) {
@@ -547,7 +551,7 @@
       tr.innerHTML = `
         <td class="pos ${i < 3 ? 'top' : ''}">${i + 1}º</td>
         <td class="loja"></td>
-        <td class="num"><b>${semItem(p) || int(p.cop)}</b></td>
+        <td class="num">${semItem(p) || `<button type="button" class="rank-copos-button" aria-label="Ver comandas com copo de ${p.l.nome}">${int(p.cop)}</button>`}</td>
         <td class="num">${semItem(p) ? '—' : int(p.ccop)}</td>
         <td><div class="pct-cell"><div class="mini-bar"><div style="width:${Math.min(100, p.pct * 100)}%;background:${color}"></div></div><span>${int(p.usados)}/${int(p.l.copos)}</span></div></td>
         <td class="num">${int(p.c250)}</td>
@@ -559,6 +563,8 @@
       tr.querySelector('.loja').textContent = p.l.nome;
       tr.querySelector('.loja').title = `${p.l.nome} – ${p.l.cidade}`;
       tr.addEventListener('click', () => focusLoja(p.l.i, true));
+      const coposBtn = tr.querySelector('.rank-copos-button');
+      if (coposBtn) coposBtn.addEventListener('click', e => { e.stopPropagation(); abrirDetalheCopos(p.l.i, coposBtn); });
       body.appendChild(tr);
     });
     if (!rows.length) body.innerHTML = '<tr><td colspan="11" class="muted">Nenhuma loja selecionada</td></tr>';
@@ -799,7 +805,7 @@
     $('btnLogout').addEventListener('click', logout);
     $('btnTheme').addEventListener('click', toggleTheme);
     $('btnRefresh').addEventListener('click', refresh);
-    $('kCoposDrill').addEventListener('click', abrirDetalheCopos);
+    $('kCoposDrill').addEventListener('click', e => abrirDetalheCopos(null, e.currentTarget));
     $('kCoposDrill').addEventListener('keydown', e => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrirDetalheCopos(); }
     });

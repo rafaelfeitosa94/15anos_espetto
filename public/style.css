@@ -293,6 +293,8 @@ button, input, select { font: inherit; color: inherit; }
 .rank tbody tr:hover td { background: var(--surface-2); }
 .rank tr.sel td { background: var(--accent-soft); }
 .rank .num { text-align: right; }
+.rank-copos-button { border: 0; padding: 0 2px; background: transparent; color: var(--text); font: inherit; font-weight: 800; cursor: pointer; border-bottom: 1px dashed var(--accent); }
+.rank-copos-button:hover, .rank-copos-button:focus-visible { color: var(--accent); outline: none; border-bottom-style: solid; }
 .rank .pos { width: 30px; font-weight: 700; color: var(--muted); }
 .rank .pos.top { color: var(--accent); }
 .rank .loja { font-weight: 600; max-width: 180px; overflow: hidden; text-overflow: ellipsis; }

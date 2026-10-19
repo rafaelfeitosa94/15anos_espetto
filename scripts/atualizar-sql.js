@@ -14,14 +14,19 @@ const c = require('../lib/consolidar');
 const ROOT = path.resolve(__dirname, '..');
 const ARQ = process.env.SAIDA || path.join(ROOT, 'data', 'dados.json'); // SAIDA: só para testes
 const PS1 = path.join(__dirname, 'exec-sp.ps1');
+const PS1_COMANDAS = path.join(__dirname, 'exec-comandas.ps1');
 
 function execSP({ inicio, fim, parte }) {
   const saida = path.join(os.tmpdir(), `copo15_${parte}_${inicio}_${process.pid}.json`);
   const t = Date.now();
+  const detalhe = parte === 'comandas_copo';
+  const script = detalhe ? PS1_COMANDAS : PS1;
+  const args = detalhe
+    ? ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', script, '-Inicio', inicio, '-Fim', fim, '-Saida', saida]
+    : ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', script,
+      '-Inicio', inicio, '-Fim', fim, '-Parte', parte, '-Saida', saida];
   return new Promise((resolve, reject) => {
-    execFile('powershell.exe',
-      ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', PS1,
-        '-Inicio', inicio, '-Fim', fim, '-Parte', parte, '-Saida', saida],
+    execFile('powershell.exe', args,
       { timeout: 20 * 60 * 1000, windowsHide: true },
       (err, stdout, stderr) => {
         if (err) return reject(new Error(`${parte} ${inicio}..${fim}: ${(stderr || err.message).trim()}`));
@@ -29,7 +34,9 @@ function execSP({ inicio, fim, parte }) {
           const obj = JSON.parse(fs.readFileSync(saida, 'utf8'));
           fs.unlinkSync(saida);
           console.log(`  ${parte.padEnd(19)} ${inicio}..${fim} ${((Date.now() - t) / 1000).toFixed(1)}s`);
-          resolve(obj);
+          resolve(detalhe ? {
+            comandas_copo: obj.map(x => [x.loja, x.data, String(x.comanda), Number(x.valor), Number(x.copos)]),
+          } : obj);
         } catch (e) { reject(e); }
       });
   });
