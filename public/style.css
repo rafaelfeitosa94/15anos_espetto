@@ -256,6 +256,9 @@ button, input, select { font: inherit; color: inherit; }
 .kpi::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--border); }
 .kpi-accent::before { background: var(--brand-gradient); height: 4px; }
 .kpi-accent .kpi-val { color: var(--accent); }
+.kpi-clickable { cursor: pointer; }
+.kpi-clickable:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.kpi-drill-hint { color: var(--accent); font-size: 11px; font-weight: 700; margin-top: 2px; }
 .mini-bar { height: 6px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 99px; overflow: hidden; margin: 4px 0 2px; }
 .mini-bar > div { height: 100%; width: 0; background: var(--ok); border-radius: 99px; transition: width .5s; }
 
@@ -338,6 +341,28 @@ button, input, select { font: inherit; color: inherit; }
   transition: all .25s; pointer-events: none; z-index: 2000; max-width: calc(100vw - 32px);
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.modal { position: fixed; inset: 0; z-index: 3000; display: grid; place-items: center; padding: 18px; }
+.modal.hidden { display: none; }
+.modal-backdrop { position: absolute; inset: 0; background: rgba(15, 12, 10, .68); backdrop-filter: blur(3px); }
+.modal-card { position: relative; width: min(920px, 100%); max-height: min(82vh, 800px); display: flex; flex-direction: column; background: var(--surface-solid); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 24px 80px rgba(0,0,0,.35); padding: 20px; }
+.modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
+.modal-head h2 { font-size: 23px; margin: 2px 0; }
+.modal-head p { margin: 0; }
+.modal-legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: 12px; color: var(--muted); padding: 8px 0 12px; }
+.modal-legend i { width: 10px; height: 10px; display: inline-block; border-radius: 50%; margin-right: 5px; }
+.cup-orange { background: #f78400; }
+.cup-red { background: #d4321c; }
+.modal-table-wrap { overflow: auto; min-height: 100px; }
+.modal-table { min-width: 620px; }
+.modal-table td { padding: 9px 7px; }
+.cup-value-orange { color: #f78400; }
+.cup-value-red { color: #d4321c; }
+.empty-state { text-align: center; color: var(--muted); padding: 30px 12px; }
+@media (max-width: 600px) {
+  .modal { padding: 8px; }
+  .modal-card { max-height: 92vh; padding: 14px; }
+  .modal-head h2 { font-size: 20px; }
+}
 
 /* ---------- responsive ---------- */
 @media (max-width: 1280px) {

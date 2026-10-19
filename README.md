@@ -37,9 +37,12 @@ Instalação do runner, secrets e variáveis: **[docs/CONFIGURAR_RUNNER.md](docs
 | Estoque usado | copos entregues acumulados desde 15/10 até a data final do filtro, versus copos enviados à loja |
 | Recarga do banco | as tabelas de vendas são recarregadas várias vezes ao dia; se um dia já fechado vier com bem menos comandas que a versão publicada, o runner espera 4 min e consulta de novo (até 2 vezes) e, se persistir, mantém a versão publicada |
 | vs 2025 | mesmos indicadores nas **mesmas datas** de 2025 (15/10–30/11/2025), para as lojas selecionadas |
+| Detalhe de copos | clique em **Copos entregues** para ver data, loja, número da comanda, unidades do copo e valor do consumo; acima de R$ 250 em laranja e a partir de R$ 500 em vermelho |
 
 Fontes: bases `bd_espetto_2025` (Espetto) e `bd_mane_2025` loja 13 (Cabo Frio Collab), Zig (Villa Lobos), pela
 procedure `dbo.sp_dashboard_copo15`.
+
+O detalhe por comanda exige a versão atualizada da procedure em `sql/sp_dashboard_copo15.sql`. Execute esse script uma vez no banco `master` pelo SSMS; as próximas atualizações horárias passarão a publicar também as comandas com copo.
 
 ### Ano anterior (comparação)
 

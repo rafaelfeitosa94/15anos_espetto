@@ -50,6 +50,7 @@ IF OBJECT_ID('tempdb..#prod') IS NOT NULL DROP TABLE #prod;
 IF OBJECT_ID('tempdb..#lj') IS NOT NULL DROP TABLE #lj;
 IF OBJECT_ID('tempdb..#pd') IS NOT NULL DROP TABLE #pd;
 IF OBJECT_ID('tempdb..#cp') IS NOT NULL DROP TABLE #cp;
+IF OBJECT_ID('tempdb..#cc') IS NOT NULL DROP TABLE #cc;
 
 -- valor = faturamento da comanda (consumo + serviço - cortesia); consumo = base da regra do copo
 CREATE TABLE #com (loja nvarchar(150), data date, valor decimal(16, 2), consumo decimal(16, 2));
@@ -59,6 +60,7 @@ CREATE TABLE #t  (base char(1), cod varchar(50), data date, tipo varchar(50), co
 CREATE TABLE #pg (base char(1), cod varchar(50), data date, tipo varchar(50), comanda varchar(50), cortesia float);
 -- copos entregues por loja/dia: cop = quantidade do item, ccop = comandas com o item
 CREATE TABLE #cp (loja nvarchar(150), data date, cop decimal(16, 3), ccop int);
+CREATE TABLE #cc (loja nvarchar(150), data date, comanda nvarchar(100), valor decimal(16, 2), copos decimal(16, 3));
 CREATE TABLE #prod (loja nvarchar(150), data date, produto nvarchar(300), qtd decimal(16, 3), valor decimal(16, 2));
 
 IF @parte = 'vendas'
@@ -151,6 +153,44 @@ FROM master.dbo.vw_faturamento_villa_lobos_cupom
 WHERE DATA >= @inicio AND DATA <= @fim AND UPPER(LTRIM(RTRIM(PRODUTO))) = @item
 GROUP BY LOJA, DATA
 OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
+-- Comandas com o item de copo lançado: consumo (sem serviço) e unidades do item.
+INSERT #cc (loja, data, comanda, valor, copos)
+SELECT v.loja, v.data, v.comanda, CAST(v.consumo AS decimal(16, 2)), p.copos
+FROM #v v
+JOIN (
+    SELECT CAST(codLoja AS varchar(50)) AS cod, CAST(dataVenda AS date) AS data,
+           CAST(tipoVenda AS varchar(50)) AS tipo, CAST(controle AS varchar(50)) AS comanda,
+           SUM(quantidade) AS copos
+    FROM bd_espetto_2025.dbo.BD_PRODUTOS_V2
+    WHERE cancelado = 'N' AND UPPER(LTRIM(RTRIM(descricaoProduto))) = @item
+      AND dataVenda >= @ini AND dataVenda < @fimx
+    GROUP BY CAST(codLoja AS varchar(50)), CAST(dataVenda AS date), CAST(tipoVenda AS varchar(50)), CAST(controle AS varchar(50))
+) p ON p.cod = v.cod AND p.data = v.data AND p.tipo = v.tipo AND p.comanda = v.comanda
+WHERE v.base = 'E'
+OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
+
+INSERT #cc (loja, data, comanda, valor, copos)
+SELECT v.loja, v.data, v.comanda, CAST(v.consumo AS decimal(16, 2)), p.copos
+FROM #v v
+JOIN (
+    SELECT CAST(dataVenda AS date) AS data, CAST(tipoVenda AS varchar(50)) AS tipo,
+           CAST(controle AS varchar(50)) AS comanda, SUM(quantidade) AS copos
+    FROM bd_mane_2025.dbo.BD_PRODUTOS_V2
+    WHERE codLoja = 13 AND cancelado = 'N' AND UPPER(LTRIM(RTRIM(descricaoProduto))) = @item
+      AND dataVenda >= @ini AND dataVenda < @fimx
+    GROUP BY CAST(dataVenda AS date), CAST(tipoVenda AS varchar(50)), CAST(controle AS varchar(50))
+) p ON p.data = v.data AND p.tipo = v.tipo AND p.comanda = v.comanda
+WHERE v.base = 'M'
+OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
+
+INSERT #cc (loja, data, comanda, valor, copos)
+SELECT LOJA, DATA, CAST(COMANDAS AS nvarchar(100)), SUM(VALOR),
+       SUM(CASE WHEN UPPER(LTRIM(RTRIM(PRODUTO))) = @item THEN QUANTIDADE ELSE 0 END)
+FROM master.dbo.vw_faturamento_villa_lobos_cupom
+WHERE DATA >= @inicio AND DATA <= @fim
+GROUP BY LOJA, DATA, COMANDAS
+HAVING SUM(CASE WHEN UPPER(LTRIM(RTRIM(PRODUTO))) = @item THEN QUANTIDADE ELSE 0 END) > 0
+OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
 END
 
 -- Vendas por loja/dia: comanda conta para o copo quando o CONSUMO (sem taxa de serviço) é maior que @limite
@@ -212,11 +252,11 @@ UPDATE #prod SET produto = UPPER(LTRIM(RTRIM(
 
 -- Dicionários (índices a partir de 0)
 SELECT ROW_NUMBER() OVER (ORDER BY loja) - 1 AS id, loja
-INTO #lj FROM (SELECT loja FROM #ven UNION SELECT loja FROM #prod) x;
+INTO #lj FROM (SELECT loja FROM #ven UNION SELECT loja FROM #prod UNION SELECT loja FROM #cc) x;
 SELECT ROW_NUMBER() OVER (ORDER BY produto) - 1 AS id, produto
 INTO #pd FROM (SELECT DISTINCT produto FROM #prod) x;
 
-DECLARE @lojas nvarchar(max), @produtos nvarchar(max), @vendas nvarchar(max), @prods nvarchar(max);
+DECLARE @lojas nvarchar(max), @produtos nvarchar(max), @vendas nvarchar(max), @prods nvarchar(max), @comandas nvarchar(max);
 
 SELECT @lojas = STUFF((
     SELECT ',"' + REPLACE(REPLACE(loja, '\', '\\'), '"', '\"') + '"'
@@ -246,11 +286,21 @@ SELECT @prods = STUFF((
     ORDER BY l.id, p.data, d.id FOR XML PATH(''), TYPE).value('.', 'nvarchar(max)'), 1, 1, '')
 OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
 
+SELECT @comandas = STUFF((
+    SELECT ',[' + CAST(l.id AS varchar(10)) + ',"' + CONVERT(char(10), c.data, 120) + '","'
+         + REPLACE(REPLACE(ISNULL(c.comanda, ''), '\', '\\'), '"', '\"') + '",'
+         + CONVERT(varchar(30), CAST(c.valor AS decimal(16, 2))) + ','
+         + CONVERT(varchar(30), CAST(c.copos AS decimal(16, 3))) + ']'
+    FROM #cc c JOIN #lj l ON l.loja = c.loja
+    ORDER BY l.id, c.data, c.comanda FOR XML PATH(''), TYPE).value('.', 'nvarchar(max)'), 1, 1, '')
+OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
+
 SELECT CAST('{"parte":"' + @parte + '","inicio":"' + CONVERT(char(10), @inicio, 120) + '","fim":"' + CONVERT(char(10), @fim, 120)
      + '","gerado_em":"' + CONVERT(varchar(19), GETDATE(), 126)
      + '","limite":' + CONVERT(varchar(20), @limite)
      + ',"lojas":[' + ISNULL(@lojas, '') + '],"produtos":[' + ISNULL(@produtos, '')
-     + '],"vendas":[' + ISNULL(@vendas, '') + '],"prod":[' + ISNULL(@prods, '') + ']}' AS nvarchar(max)) AS payload;
+     + '],"vendas":[' + ISNULL(@vendas, '') + '],"prod":[' + ISNULL(@prods, '')
+     + '],"comandas_copo":[' + ISNULL(@comandas, '') + ']}' AS nvarchar(max)) AS payload;
 -- </corpo>
 END
 GO

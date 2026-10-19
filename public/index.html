@@ -107,12 +107,13 @@
 
     <!-- KPIs -->
     <section class="kpis">
-      <article class="kpi kpi-accent">
+      <article class="kpi kpi-accent kpi-clickable" id="kCoposDrill" role="button" tabindex="0" aria-haspopup="dialog" aria-label="Ver comandas que receberam copos">
         <span class="kpi-lbl" title="Quantidade do item COPO ESPETTO ANIVER 15 lançado nas comandas">Copos entregues</span>
         <strong class="kpi-val" id="kCopos">—</strong>
         <span class="kpi-sub kpi-strong" id="kCoposC">—</span>
         <div class="mini-bar"><div id="kCoposBar"></div></div>
         <span class="kpi-sub" id="kCoposS">—</span>
+        <span class="kpi-drill-hint">Ver comandas e valores ↗</span>
       </article>
       <article class="kpi">
         <span class="kpi-lbl">Comandas &gt; R$ 250</span>
@@ -236,6 +237,21 @@
 </div>
 
 <div id="toast" class="toast" role="status"></div>
+
+<div id="coposModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="coposModalTitle">
+  <div class="modal-backdrop" data-close="true"></div>
+  <section class="modal-card">
+    <header class="modal-head">
+      <div><span class="muted small">DETALHAMENTO</span><h2 id="coposModalTitle">Comandas com copo</h2><p id="coposModalSummary" class="muted small"></p></div>
+      <button class="icon-btn" id="coposModalClose" aria-label="Fechar detalhamento">✕</button>
+    </header>
+    <div class="modal-legend"><span><i class="cup-orange"></i> acima de R$ 250</span><span><i class="cup-red"></i> a partir de R$ 500</span></div>
+    <div class="modal-table-wrap">
+      <table class="rank modal-table"><thead><tr><th>Data</th><th>Loja</th><th>Comanda</th><th class="num">Copos</th><th class="num">Valor do consumo</th></tr></thead><tbody id="coposModalRows"></tbody></table>
+      <p id="coposModalEmpty" class="empty-state hidden">Nenhuma comanda com copo no período e nas lojas selecionadas.</p>
+    </div>
+  </section>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>

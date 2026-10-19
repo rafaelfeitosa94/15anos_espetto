@@ -509,6 +509,30 @@
     $('kTmAA').innerHTML = aa ? linhaAA(tm, aa.tot.tm, brl, aa) : '';
   }
 
+  function abrirDetalheCopos() {
+    const lojas = new Map(DATA.lojas.map((l, i) => [i, l]));
+    const dias = new Map(DATA.dias.map((d, i) => [i, d]));
+    const rows = (DATA.comandas_copo || []).filter(([li, di]) =>
+      state.lojas.has(li) && dias.has(di) && dias.get(di) >= state.ini && dias.get(di) <= state.fim
+    ).sort((a, b) => b[3] - a[3] || b[1] - a[1]);
+    const escape = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+    $('coposModalSummary').textContent = `${int(rows.length)} comandas · ${state.ini.split('-').reverse().join('/')} a ${state.fim.split('-').reverse().join('/')} · ${state.lojas.size} loja(s)`;
+    $('coposModalRows').innerHTML = rows.map(([li, di, numero, valor, copos]) => {
+      const day = dias.get(di) || '';
+      const cls = valor >= 500 ? 'cup-value-red' : valor > 250 ? 'cup-value-orange' : '';
+      const data = day ? `${day.slice(8,10)}/${day.slice(5,7)}/${day.slice(0,4)}` : '—';
+      return `<tr><td>${data}</td><td>${escape(lojas.get(li)?.nome || lojas.get(li)?.codigo || '—')}</td><td>${escape(numero)}</td><td class="num">${int(copos)}</td><td class="num ${cls}"><b>${brl(valor)}</b></td></tr>`;
+    }).join('');
+    $('coposModalEmpty').classList.toggle('hidden', rows.length > 0);
+    $('coposModal').classList.remove('hidden');
+    $('coposModalClose').focus();
+  }
+
+  function fecharDetalheCopos() {
+    $('coposModal').classList.add('hidden');
+    $('kCoposDrill').focus();
+  }
+
   function renderRanking({ perLoja, aa }) {
     const key = state.rankBy;
     const rows = perLoja.filter(p => state.lojas.has(p.l.i))
@@ -775,6 +799,13 @@
     $('btnLogout').addEventListener('click', logout);
     $('btnTheme').addEventListener('click', toggleTheme);
     $('btnRefresh').addEventListener('click', refresh);
+    $('kCoposDrill').addEventListener('click', abrirDetalheCopos);
+    $('kCoposDrill').addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrirDetalheCopos(); }
+    });
+    $('coposModalClose').addEventListener('click', fecharDetalheCopos);
+    $('coposModal').addEventListener('click', e => { if (e.target.dataset.close) fecharDetalheCopos(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('coposModal').classList.contains('hidden')) fecharDetalheCopos(); });
     $('sbOpen').addEventListener('click', () => $('app').classList.add('sb-on'));
     $('sbClose').addEventListener('click', () => $('app').classList.remove('sb-on'));
     $('sbBackdrop').addEventListener('click', () => $('app').classList.remove('sb-on'));
