@@ -309,5 +309,15 @@
   "copos": 10,
   "lat": -22.8816,
   "lng": -42.0221
+ },
+ {
+  "codigo": "ESP QUIOSQUE MACAÉ",
+  "nome": "Quiosque Macaé",
+  "cidade": "Macaé - RJ",
+  "uf": "RJ",
+  "endereco": "Av. Aluizio da Silva Gomes, 800 - Loja Q14A",
+  "copos": 10,
+  "lat": -22.3712,
+  "lng": -41.786
  }
 ]
