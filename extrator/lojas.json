@@ -7,7 +7,8 @@
   "endereco": "Calçada das Orquídeas, 98 – Centro Comercial Alphaville",
   "copos": 220,
   "lat": -23.4972,
-  "lng": -46.8512
+  "lng": -46.8512,
+  "meta": 865.28
  },
  {
   "codigo": "ESP VALQUEIRE LOUNGE",
@@ -17,7 +18,8 @@
   "endereco": "Estr. Intendente Magalhães, 610 – C/D",
   "copos": 50,
   "lat": -22.8778,
-  "lng": -43.3624
+  "lng": -43.3624,
+  "meta": 511.74
  },
  {
   "codigo": "ESP NY",
@@ -27,7 +29,8 @@
   "endereco": "Av. das Américas, 5000 – U 114",
   "copos": 120,
   "lat": -23.0007,
-  "lng": -43.391
+  "lng": -43.391,
+  "meta": 493.08
  },
  {
   "codigo": "ESP OLEGÁRIO",
@@ -37,7 +40,8 @@
   "endereco": "Rua Olegário Maciel, 135 – U D",
   "copos": 100,
   "lat": -23.0118,
-  "lng": -43.305
+  "lng": -43.305,
+  "meta": 581.73
  },
  {
   "codigo": "ESP RECREIO",
@@ -47,7 +51,8 @@
   "endereco": "Rua Edson Sá, 18 – Loja C",
   "copos": 100,
   "lat": -23.0189,
-  "lng": -43.4608
+  "lng": -43.4608,
+  "meta": 387.36
  },
  {
   "codigo": "ESP PARK SHOP CG",
@@ -57,7 +62,8 @@
   "endereco": "Estr. do Moinho, 1200 – 108 F",
   "copos": 60,
   "lat": -22.9239,
-  "lng": -43.5684
+  "lng": -43.5684,
+  "meta": 360.67
  },
  {
   "codigo": "ESP SULACAP",
@@ -67,7 +73,8 @@
   "endereco": "Av. Marechal Fontenelle, 3545 – Lojas 202, 203, 204, 205 e 206",
   "copos": 40,
   "lat": -22.8851,
-  "lng": -43.3897
+  "lng": -43.3897,
+  "meta": 284.56
  },
  {
   "codigo": "ESP UBERLÂNDIA",
@@ -77,7 +84,8 @@
   "endereco": "Av. Liberdade, 371",
   "copos": 60,
   "lat": -18.9332,
-  "lng": -48.2911
+  "lng": -48.2911,
+  "meta": 245
  },
  {
   "codigo": "ESP JARDINS",
@@ -87,7 +95,8 @@
   "endereco": "R. Bela Cintra, 1579",
   "copos": 60,
   "lat": -23.5572,
-  "lng": -46.6628
+  "lng": -46.6628,
+  "meta": 245.42
  },
  {
   "codigo": "ESP ICARAÍ",
@@ -97,7 +106,8 @@
   "endereco": "R. Mariz e Barros, 396",
   "copos": 30,
   "lat": -22.9036,
-  "lng": -43.1018
+  "lng": -43.1018,
+  "meta": 236.87
  },
  {
   "codigo": "ESP VISTA ALEGRE",
@@ -107,7 +117,8 @@
   "endereco": "Av. Brás de Pina, 2097 A",
   "copos": 40,
   "lat": -22.8395,
-  "lng": -43.2969
+  "lng": -43.2969,
+  "meta": 181.47
  },
  {
   "codigo": "ESP AMERICANA",
@@ -117,7 +128,8 @@
   "endereco": "Av. Nossa Senhora de Fátima, 2370 – Loja L001",
   "copos": 40,
   "lat": -22.7427,
-  "lng": -47.3092
+  "lng": -47.3092,
+  "meta": 181.6
  },
  {
   "codigo": "ESP RIO DAS OSTRAS",
@@ -127,7 +139,8 @@
   "endereco": "Estr. Prof. Leandro Faria Sarzedas, 1300 – Loja 1118 (Shopping Plaza)",
   "copos": 50,
   "lat": -22.4951,
-  "lng": -41.9229
+  "lng": -41.9229,
+  "meta": 227.5
  },
  {
   "codigo": "ESP GRANDE RIO",
@@ -137,7 +150,8 @@
   "endereco": "Estr. São João de Meriti, 111 – U 428",
   "copos": 60,
   "lat": -22.7961,
-  "lng": -43.3531
+  "lng": -43.3531,
+  "meta": 253.61
  },
  {
   "codigo": "ESP GOIÂNIA",
@@ -147,7 +161,8 @@
   "endereco": "Av. São João, 161",
   "copos": 50,
   "lat": -16.7106,
-  "lng": -49.2419
+  "lng": -49.2419,
+  "meta": 176.39
  },
  {
   "codigo": "ESP CAXIAS SHOPPING",
@@ -157,7 +172,8 @@
   "endereco": "Rodovia Washington Luiz, 2895 – U 303 E/F",
   "copos": 40,
   "lat": -22.7977,
-  "lng": -43.2927
+  "lng": -43.2927,
+  "meta": 129.45
  },
  {
   "codigo": "ESP BARRA SUL",
@@ -167,7 +183,8 @@
   "endereco": "Av. das Américas, 11.889 – U F",
   "copos": 40,
   "lat": -23.0017,
-  "lng": -43.4135
+  "lng": -43.4135,
+  "meta": 162.08
  },
  {
   "codigo": "ESP TATUAPÉ",
@@ -177,7 +194,8 @@
   "endereco": "Rua Domingos Agostim, 91",
   "copos": 40,
   "lat": -23.5421,
-  "lng": -46.5761
+  "lng": -46.5761,
+  "meta": 128.12
  },
  {
   "codigo": "ESP ANDRADINA",
@@ -187,7 +205,8 @@
   "endereco": "Rua Paes Leme, 1653",
   "copos": 40,
   "lat": -20.8904,
-  "lng": -51.3725
+  "lng": -51.3725,
+  "meta": 133.9
  },
  {
   "codigo": "ESP GUARULHOS",
@@ -197,7 +216,8 @@
   "endereco": "Av. Tiradentes, 92",
   "copos": 40,
   "lat": -23.4641,
-  "lng": -46.5284
+  "lng": -46.5284,
+  "meta": 54.5
  },
  {
   "codigo": "ESP AEROTOWN",
@@ -207,7 +227,8 @@
   "endereco": "Av. Ayrton Senna, 2541 – Bl. C/F, Lojas 167 e 168",
   "copos": 30,
   "lat": -22.9877,
-  "lng": -43.3654
+  "lng": -43.3654,
+  "meta": 91.5
  },
  {
   "codigo": "ESP SALVADOR",
@@ -217,7 +238,8 @@
   "endereco": "Rua da Fonte do Boi, 32",
   "copos": 30,
   "lat": -13.0105,
-  "lng": -38.4889
+  "lng": -38.4889,
+  "meta": 104.25
  },
  {
   "codigo": "ESP CHÁCARA ST",
@@ -227,7 +249,8 @@
   "endereco": "Rua Américo Brasiliense, 1795 – U A",
   "copos": 25,
   "lat": -23.6327,
-  "lng": -46.6998
+  "lng": -46.6998,
+  "meta": 70.5
  },
  {
   "codigo": "ESP BELA VISTA",
@@ -237,7 +260,8 @@
   "endereco": "Rua Pedroso, 258",
   "copos": 25,
   "lat": -23.5623,
-  "lng": -46.6419
+  "lng": -46.6419,
+  "meta": 67.65
  },
  {
   "codigo": "ESP GUADALUPE",
@@ -247,7 +271,8 @@
   "endereco": "Av. Brasil, 22155 – LJ 107-6",
   "copos": 15,
   "lat": -22.8444,
-  "lng": -43.3758
+  "lng": -43.3758,
+  "meta": 46.67
  },
  {
   "codigo": "ESP CAXIAS CARREFOUR",
@@ -257,7 +282,8 @@
   "endereco": "Rodovia Washington Luiz, 4735 – U 03",
   "copos": 15,
   "lat": -22.7707,
-  "lng": -43.2861
+  "lng": -43.2861,
+  "meta": 13.11
  },
  {
   "codigo": "ESP QUIOSQUE CABO FRIO",
@@ -267,7 +293,8 @@
   "endereco": "Av. Henrique Terra, 1700 – Q20 (Shopping Park Lagos)",
   "copos": 10,
   "lat": -22.8745,
-  "lng": -42.0441
+  "lng": -42.0441,
+  "meta": 14.93
  },
  {
   "codigo": "ESP QUIOSQUE NORTE SHOP",
@@ -277,7 +304,8 @@
   "endereco": "Av. Dom Helder Câmara, 5474 – Quiosque QSI nº 2, 2º piso",
   "copos": 10,
   "lat": -22.8822,
-  "lng": -43.2755
+  "lng": -43.2755,
+  "meta": 12.67
  },
  {
   "codigo": "ESP VILA LOBOS",
@@ -287,7 +315,8 @@
   "endereco": "Av. Professor Fonseca Rodrigues, 2001 – Quiosque QR-4",
   "copos": 150,
   "lat": -23.5405,
-  "lng": -46.7333
+  "lng": -46.7333,
+  "meta": 171.15
  },
  {
   "codigo": "ESP PENÍNSULA",
@@ -298,7 +327,8 @@
   "copos": 100,
   "lat": -22.9897,
   "lng": -43.3513,
-  "pdv_externo": true
+  "pdv_externo": true,
+  "meta": 289.33
  },
  {
   "codigo": "MAN CABO FRIO COLLAB",
@@ -308,7 +338,8 @@
   "endereco": "Rua João Pessoa, 283 – Lojas 2 e 3",
   "copos": 10,
   "lat": -22.8816,
-  "lng": -42.0221
+  "lng": -42.0221,
+  "meta": 173.11
  },
  {
   "codigo": "ESP QUIOSQUE MACAÉ",
@@ -318,6 +349,7 @@
   "endereco": "Av. Aluizio da Silva Gomes, 800 - Loja Q14A",
   "copos": 10,
   "lat": -22.3712,
-  "lng": -41.786
+  "lng": -41.786,
+  "meta": 15.11
  }
 ]

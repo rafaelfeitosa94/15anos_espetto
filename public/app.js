@@ -432,6 +432,18 @@
     return out;
   }
 
+  // comandas > R$ 250 acumuladas desde o início da ação até a data final do filtro (a meta é da ação toda)
+  function c250Acumulado(lojaFilter) {
+    const fimIdx = DATA.dias.findIndex(d => d > state.fim);
+    const lim = fimIdx < 0 ? DATA.dias.length : fimIdx;
+    const out = new Map();
+    for (const v of DATA.vendas) {
+      if (v[1] >= lim || (lojaFilter && !lojaFilter.has(v[0]))) continue;
+      out.set(v[0], (out.get(v[0]) || 0) + v[4]);
+    }
+    return out;
+  }
+
   /* ---------------- render ---------------- */
   function render() {
     if (!DATA) return;
@@ -443,8 +455,12 @@
     const agg = aggregate();
     agg.aa = aggregateAA();
     const usados = coposUsados(state.lojas);
+    const acum250 = c250Acumulado(state.lojas);
     agg.perLoja.forEach(p => {
       p.usados = usados.get(p.l.i) || 0;
+      // meta: contas > R$ 250 a alcançar na ação (planilha de premiação); % atingido = acumulado desde 15/10
+      p.c250Acum = acum250.get(p.l.i) || 0;
+      p.metaPct = p.l.meta ? p.c250Acum / p.l.meta : 0;
       p.pct = p.l.copos ? p.usados / p.l.copos : 0;
       p.tm = p.com ? p.fat / p.com : 0;
     });
@@ -544,7 +560,7 @@
   function renderRanking({ perLoja, aa }) {
     const key = state.rankBy;
     const rows = perLoja.filter(p => state.lojas.has(p.l.i))
-      .map(p => ({ ...p, sort: key === 'pct' ? p.pct : key === 'tm' ? p.tm : p[key] }))
+      .map(p => ({ ...p, sort: key === 'pct' ? p.pct : key === 'tm' ? p.tm : key === 'meta' ? p.metaPct : p[key] }))
       .sort((a, b) => b.sort - a.sort || b.fat - a.fat);
     const body = $('rankBody');
     body.innerHTML = '';
@@ -559,6 +575,8 @@
         <td class="num">${semItem(p) ? '—' : int(p.ccop)}</td>
         <td><div class="pct-cell"><div class="mini-bar"><div style="width:${Math.min(100, p.pct * 100)}%;background:${color}"></div></div><span>${int(p.usados)}/${int(p.l.copos)}</span></div></td>
         <td class="num">${int(p.c250)}</td>
+        <td class="num">${p.l.meta ? int(Math.round(p.l.meta)) : '—'}</td>
+        <td>${metaTxt(p)}</td>
         <td class="num">${brlShort(p.fat)}</td>
         <td class="num">${vsAA(p, aa)}</td>
         <td class="num">${int(p.com)}</td>
@@ -571,7 +589,7 @@
       if (coposBtn) coposBtn.addEventListener('click', e => { e.stopPropagation(); abrirDetalheCopos(p.l.i, coposBtn); });
       body.appendChild(tr);
     });
-    if (!rows.length) body.innerHTML = '<tr><td colspan="11" class="muted">Nenhuma loja selecionada</td></tr>';
+    if (!rows.length) body.innerHTML = '<tr><td colspan="13" class="muted">Nenhuma loja selecionada</td></tr>';
   }
 
   // variação do faturamento da loja vs 2025 (coluna do ranking)
@@ -586,6 +604,17 @@
   function notaSoFat(r) {
     return `2025: de ${fmtDate(r.soFat.de)} a ${fmtDate(r.soFat.ate)} só há o faturamento (sistema antigo, sem comandas); ` +
       'a loja é comparada com 2026 nas mesmas datas';
+  }
+
+  // % da meta atingido (comandas > R$ 250 desde 15/10 até a data final do filtro)
+  function metaTxt(p) {
+    if (!p.l.meta) return '—';
+    if (p.l.pdv_externo) return '<span class="delta na" title="Loja com PDV próprio: sem comandas no banco">PDV próprio</span>';
+    const r = p.metaPct;
+    const cor = r >= 1 ? cssVar('--ok') : r >= .6 ? cssVar('--warn') : cssVar('--bad');
+    const tit = `${int(p.c250Acum)} de ${int(Math.round(p.l.meta))} contas > R$ 250 desde ${fmtDate(DATA.periodo.inicio)}`;
+    return `<div class="pct-cell" title="${tit}"><div class="mini-bar"><div style="width:${Math.min(100, r * 100)}%;background:${cor}"></div></div>` +
+      `<span${r >= 1 ? ' class="meta-ok"' : ''}>${(r * 100).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}%</span></div>`;
   }
 
   function saldoTxt(p) {

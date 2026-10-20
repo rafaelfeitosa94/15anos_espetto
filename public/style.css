@@ -420,3 +420,4 @@ button, input, select { font: inherit; color: inherit; }
 .delta.up { color: #2e9e5b; }
 .delta.down { color: var(--bad); }
 .delta.zero, .delta.na { color: var(--muted); font-weight: 600; }
+.meta-ok { color: var(--ok); font-weight: 700; }
