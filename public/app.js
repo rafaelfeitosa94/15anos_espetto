@@ -520,11 +520,15 @@
     const escape = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
     $('coposModalTitle').textContent = lojaId === null ? 'Comandas com copo' : `Comandas com copo · ${lojas.get(lojaId)?.nome || 'Loja'}`;
     $('coposModalSummary').textContent = `${int(rows.length)} comandas · ${state.ini.split('-').reverse().join('/')} a ${state.fim.split('-').reverse().join('/')} · ${lojaId === null ? `${state.lojas.size} loja(s)` : 'loja selecionada'}`;
-    $('coposModalRows').innerHTML = rows.map(([li, di, numero, valor, copos]) => {
+    // faturamento = soma dos pagamentos da comanda (BD_PAGAMENTOS_V2); null quando não há pagamento lançado
+    const totValor = rows.reduce((a, r) => a + r[3], 0);
+    const totFat = rows.reduce((a, r) => a + (r[5] || 0), 0);
+    $('coposModalSummary').textContent += ` · consumo ${brl(totValor)} · faturamento ${brl(totFat)}`;
+    $('coposModalRows').innerHTML = rows.map(([li, di, numero, valor, copos, fat = null]) => {
       const day = dias.get(di) || '';
       const cls = valor >= 500 ? 'cup-value-red' : valor > 250 ? 'cup-value-orange' : '';
       const data = day ? `${day.slice(8,10)}/${day.slice(5,7)}/${day.slice(0,4)}` : '—';
-      return `<tr><td>${data}</td><td>${escape(lojas.get(li)?.nome || lojas.get(li)?.codigo || '—')}</td><td>${escape(numero)}</td><td class="num">${int(copos)}</td><td class="num ${cls}"><b>${brl(valor)}</b></td></tr>`;
+      return `<tr><td>${data}</td><td>${escape(lojas.get(li)?.nome || lojas.get(li)?.codigo || '—')}</td><td>${escape(numero)}</td><td class="num">${int(copos)}</td><td class="num ${cls}"><b>${brl(valor)}</b></td><td class="num">${fat == null ? '—' : brl(fat)}</td></tr>`;
     }).join('');
     $('coposModalEmpty').classList.toggle('hidden', rows.length > 0);
     focoRetornoCopos = origem || $('kCoposDrill');
