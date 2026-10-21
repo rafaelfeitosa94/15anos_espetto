@@ -1,7 +1,7 @@
 # Atualização pelo runner do GitHub na rede da empresa
 
 ```
-GitHub Actions ── agenda do GitHub: todo dia às 14h40
+GitHub Actions ── agenda do GitHub: de hora em hora, 11h40 às 23h40 (pode atrasar ou pular)
       │       ├── tarefa agendada do SRVTESTE: de hora em hora, 11h40 às 23h40 (15/10 a 01/12)
       │       └── botão "Atualizar dados" do dashboard (Vercel → API do GitHub)
       ▼
@@ -69,8 +69,8 @@ sozinho quando a nova versão estiver publicada, em cerca de 2 a 4 minutos.
 ## 3.1. Tarefa agendada de hora em hora no SRVTESTE
 
 O agendador do GitHub atrasa ou pula horários. Por isso, as execuções de hora em hora são disparadas por uma
-tarefa agendada no próprio SRVTESTE, que chama a API do GitHub. A agenda do GitHub fica só com a execução fixa
-das 14h40.
+tarefa agendada no próprio SRVTESTE, que chama a API do GitHub. A agenda do GitHub nos mesmos horários fica como
+reserva.
 
 No SRVTESTE, PowerShell **como administrador**, na pasta onde copiou `runner\agendar_atualizacao.ps1`:
 

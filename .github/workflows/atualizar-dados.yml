@@ -12,10 +12,12 @@ on:
       - 'scripts/exec-comandas.ps1'
       - '.github/workflows/atualizar-dados.yml'
   schedule:
-    # Todo dia às 14h40 (São Paulo, UTC-3) = 17h40 UTC, depois da carga do Fabric. O GitHub pode atrasar alguns minutos.
-    # As execuções de hora em hora (11h40 às 23h40) são disparadas pela tarefa agendada do SRVTESTE
-    # (runner/agendar_atualizacao.ps1), que não sofre os atrasos do agendador do GitHub.
-    - cron: '40 17 * * *'
+    # De hora em hora, nos minutos :40, das 11h40 às 23h40 (São Paulo, UTC-3) = 14h40 às 02h40 UTC.
+    # O agendador do GitHub atrasa (já chegou a 3 h) ou pula horários; a tarefa agendada do SRVTESTE
+    # (runner/agendar_atualizacao.ps1) dispara nos mesmos horários sem atraso. Se as duas dispararem, a
+    # segunda fica na fila (concurrency) ou nem é criada (a tarefa não dispara se já houver execução).
+    - cron: '40 14-23 * * *'
+    - cron: '40 0-2 * * *'
   workflow_dispatch:   # disparado pela tarefa do SRVTESTE e pelo botão "Atualizar dados" do dashboard
     inputs:
       inicio:
@@ -35,7 +37,7 @@ concurrency:
 jobs:
   atualizar:
     runs-on: [self-hosted, windows, sqlserver]
-    timeout-minutes: 30
+    timeout-minutes: 45   # até 4 consultas com 5 min de espera se o banco estiver em recarga
     # Os passos usam um shell PowerShell com -ExecutionPolicy Bypass porque a política de execução
     # do SRVTESTE é "Restricted" (bloqueia os scripts temporários que o Actions cria). Vale só para
     # o processo do passo; a política do servidor não é alterada.

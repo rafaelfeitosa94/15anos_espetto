@@ -5,7 +5,7 @@ Monitoramento da ação de 15/10 a 30/11/2026: cada comanda acima de **R$ 250,00
 ## Como funciona
 
 ```
-GitHub Actions (tarefa do SRVTESTE de hora em hora 11h40–23h40, agenda do GitHub às 14h40, ou botão "Atualizar dados")
+GitHub Actions (tarefa do SRVTESTE e agenda do GitHub de hora em hora, 11h40–23h40, ou botão "Atualizar dados")
    └─> runner no SRVTESTE (rede da empresa) ─> SQL Server AD01\BARTENDER (dbo.sp_dashboard_copo15)
           └─> commit de data/dados.json pela API do GitHub ─> Vercel publica o dashboard
 ```
@@ -35,7 +35,7 @@ Instalação do runner, secrets e variáveis: **[docs/CONFIGURAR_RUNNER.md](docs
 | Copos entregues | quantidade do item de venda **COPO ESPETTO ANIVER 15** (lançado a R$ 0) nas comandas: produtos do Espetto, da Mané loja 13 (Cabo Frio Collab) e da Zig (Villa Lobos). A Península usa PDV próprio e aparece como "PDV próprio" |
 | Comandas com copo | comandas em que o item do copo foi lançado |
 | Estoque usado | copos entregues acumulados desde 15/10 até a data final do filtro, versus copos enviados à loja |
-| Recarga do banco | as tabelas de vendas são recarregadas várias vezes ao dia; se um dia já fechado vier com bem menos comandas que a versão publicada, o runner espera 4 min e consulta de novo (até 2 vezes) e, se persistir, mantém a versão publicada |
+| Recarga do banco | o Fabric recarrega as tabelas de vendas, produtos e pagamentos várias vezes ao dia; se um dia já fechado vier com bem menos comandas, copos entregues ou valor de produtos que a versão publicada, o runner espera 5 min e consulta de novo (até 3 vezes) e, se persistir, mantém a versão publicada dessas lojas/dias (vendas, copos, produtos e comandas com copo) |
 | vs 2025 | mesmos indicadores nas **mesmas datas** de 2025 (15/10–30/11/2025), para as lojas selecionadas |
 | Detalhe de copos | clique em **Copos entregues** para ver data, loja, número da comanda, unidades do copo e valor do consumo; acima de R$ 250 em laranja e a partir de R$ 500 em vermelho |
 

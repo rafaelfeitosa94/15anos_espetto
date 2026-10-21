@@ -111,15 +111,16 @@ async function publicar(conteudo, mensagem) {
   });
   let { dados, ignoradas } = await consultar();
 
-  // Proteção contra a recarga das tabelas de vendas no banco (acontece várias vezes ao dia): se dias já
-  // fechados vierem com bem menos comandas que a versão publicada, espera e consulta de novo; se persistir,
-  // mantém a versão publicada nessas lojas/dias.
-  const ESPERA = Number(process.env.ESPERA_RECARGA_SEG || 240) * 1000;
-  for (let tentativa = 1; tentativa <= 3; tentativa++) {
+  // Proteção contra a recarga das tabelas no banco pelo Fabric (vendas, produtos e pagamentos, várias vezes ao
+  // dia): se dias já fechados vierem com bem menos comandas, copos ou produtos que a versão publicada, espera e
+  // consulta de novo; se persistir, mantém a versão publicada nessas lojas/dias.
+  const ESPERA = Number(process.env.ESPERA_RECARGA_SEG || 300) * 1000;
+  const TENTATIVAS = 4;
+  for (let tentativa = 1; tentativa <= TENTATIVAS; tentativa++) {
     const suspeitos = c.quedasSuspeitas(base, dados, hoje);
     if (!suspeitos.length) break;
-    const resumo = suspeitos.slice(0, 5).map(s => `${lojasCfg[s.li].codigo} ${s.dia}: ${s.antes}→${s.agora}`).join('; ');
-    if (tentativa === 3) {
+    const resumo = suspeitos.slice(0, 5).map(s => `${lojasCfg[s.li].codigo} ${s.dia}: ${s.motivo}`).join('; ');
+    if (tentativa === TENTATIVAS) {
       console.log(`::warning::Banco possivelmente em recarga; mantida a versão publicada em ${c.preservarBase(dados, suspeitos)} loja(s)/dia(s) (${resumo}).`);
       break;
     }
