@@ -35,7 +35,7 @@ function execSP({ inicio, fim, parte }) {
           fs.unlinkSync(saida);
           console.log(`  ${parte.padEnd(19)} ${inicio}..${fim} ${((Date.now() - t) / 1000).toFixed(1)}s`);
           resolve(detalhe ? {
-            comandas_copo: obj.map(x => [x.loja, x.data, String(x.comanda), Number(x.valor), Number(x.copos), x.faturamento == null ? null : Number(x.faturamento)]),
+            comandas_copo: obj.map(x => [x.loja, x.data, String(x.comanda), Number(x.valor), Number(x.copos), x.faturamento == null ? null : Number(x.faturamento), Number(x.chopp_quantidade) || 0, Number(x.chopp_valor) || 0]),
           } : obj);
         } catch (e) { reject(e); }
       });

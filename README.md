@@ -98,6 +98,10 @@ Clique em **Atualizar dados** no dashboard, rode o workflow manualmente no GitHu
 
 PDV próprio, fora do Degust. `BD_PRODUTOS` (itens; DATA em texto dd/mm/aaaa; comanda = NUM_LANCTO) e `BD_VENDAS`
 (TOT_CUPON por comanda). Valor da comanda = TOT_CUPON nos dias em que a `BD_VENDAS` tem dados; nos outros dias, a
-soma de `BD_PRODUTOS.TOTAL` da comanda (em 27/10/2026 a `BD_VENDAS` ainda estava vazia). Copos = item
-**COPO NIVER ESPETTO**. No detalhamento, Faturamento = TOT_PAGO da `BD_VENDAS` ("—" enquanto ela estiver vazia).
+soma de `BD_PRODUTOS.TOTAL` da comanda. 2025 (comparação): `BD_VENDAS` de 15/10 a 30/11/2025, via `extrator/complementar_ano_anterior.py`. Copos = item
+**COPO NIVER ESPETTO**. No detalhamento, Faturamento = TOT_PAGO da `BD_VENDAS`.
 Sem dados de 2025 (a base começa em 02/01/2026).
+
+Detalhamento de copos: também mostra a venda do chopp do copo comemorativo, **CHOPP P/ COPO 15 ANOS ESPETTO**
+(Degust) e **CHOPP P/COPO 15ANOS** (Zig, Villa Lobos): quantidade e valor por comanda com copo, e o total vendido no
+período (todas as comandas) no topo.

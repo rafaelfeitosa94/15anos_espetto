@@ -14,6 +14,9 @@ As linhas entram com comandas = 0 e a loja fica listada em "so_faturamento". No 
 com 2026 só nas mesmas datas: o faturamento nos dias com dado em 2025, e comandas, ticket médio e > R$ 250
 só nos dias com comandas em 2025 (Degust).
 Pode rodar mais de uma vez: as linhas da BD VENDAS (comandas = 0) dessas lojas são substituídas.
+
+Também acrescenta a Península (PDV próprio, bd_peninsula_frest.dbo.BD_VENDAS, com comandas): faturamento e
+consumo da comanda = TOT_CUPON (mesma regra de 2026), comandas > R$ 250 por TOT_CUPON. Sem produtos em 2025.
 """
 import datetime as dt
 import json
@@ -74,6 +77,33 @@ def main():
     sem = [c for c in LOJAS if c not in info]
     if sem:
         logging.warning('Sem dados na BD VENDAS: %s', ', '.join(sem))
+    peninsula(arq, lojas, idx_loja)
+
+
+SQL_PEN = """
+SELECT d AS data, COUNT(*) AS com, SUM(v) AS fat,
+       SUM(CASE WHEN v > 250 THEN 1 ELSE 0 END) AS c250, SUM(CASE WHEN v > 250 THEN v ELSE 0 END) AS f250
+FROM (SELECT TRY_CONVERT(date, DATA, 103) AS d, NUM_LANCTO, ROUND(SUM(TOT_CUPON), 2) AS v
+      FROM bd_peninsula_frest.dbo.BD_VENDAS
+      WHERE TRY_CONVERT(date, DATA, 103) >= ? AND TRY_CONVERT(date, DATA, 103) <= ?
+      GROUP BY TRY_CONVERT(date, DATA, 103), NUM_LANCTO) x
+GROUP BY d
+"""
+
+
+def peninsula(arq, lojas, idx_loja):
+    aa = json.loads(arq.read_text(encoding='utf-8'))
+    li = idx_loja[norm('ESP PENÍNSULA')]
+    idx_dia = {d: i for i, d in enumerate(aa['dias'])}
+    cn = connect(load_env())
+    linhas = fetch(cn, SQL_PEN, (aa['periodo']['inicio'], aa['periodo']['fim']), 'Península BD_VENDAS')
+    cn.close()
+    novas = [[li, idx_dia[r.data.isoformat()], round(float(r.fat), 2), int(r.com), int(r.c250), round(float(r.f250), 2)]
+             for r in linhas if r.data and r.data.isoformat() in idx_dia and r.com]
+    aa['vendas'] = sorted([v for v in aa['vendas'] if v[0] != li] + novas, key=lambda v: (v[0], v[1]))
+    arq.write_text(json.dumps(aa, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
+    logging.info('ESP PENÍNSULA 2025: %d dias, R$ %.2f, %d comandas, %d > R$ 250', len(novas),
+                 sum(v[2] for v in novas), sum(v[3] for v in novas), sum(v[4] for v in novas))
 
 
 if __name__ == '__main__':
