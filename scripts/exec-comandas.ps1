@@ -78,6 +78,25 @@ $sql = @'
     WHERE v.DATA >= @inicio AND v.DATA < DATEADD(day, 1, @fim)
     GROUP BY v.LOJA, CAST(v.DATA AS date), v.COMANDAS
     HAVING SUM(CASE WHEN UPPER(LTRIM(RTRIM(v.PRODUTO)))=@item THEN v.QUANTIDADE ELSE 0 END) > 0
+    UNION ALL
+    -- Península (PDV próprio, bd_peninsula_frest; DATA em texto dd/mm/aaaa): valor = soma dos produtos da
+    -- comanda; faturamento = TOT_PAGO da BD_VENDAS (NULL enquanto a BD_VENDAS não tiver a comanda)
+    SELECT N'ESP PENÍNSULA', p.data, p.comanda, CAST(p.valor AS decimal(16,2)), CAST(p.copos AS decimal(16,3)),
+           CAST(v.pago AS decimal(16,2))
+    FROM (
+        SELECT TRY_CONVERT(date, DATA, 103) AS data, CAST(NUM_LANCTO AS nvarchar(100)) AS comanda, SUM(TOTAL) AS valor,
+               SUM(CASE WHEN UPPER(LTRIM(RTRIM(DESC_RES))) = @item_pen THEN QTE ELSE 0 END) AS copos
+        FROM bd_peninsula_frest.dbo.BD_PRODUTOS
+        WHERE TRY_CONVERT(date, DATA, 103) >= @inicio AND TRY_CONVERT(date, DATA, 103) <= @fim
+        GROUP BY TRY_CONVERT(date, DATA, 103), CAST(NUM_LANCTO AS nvarchar(100))
+    ) p
+    LEFT JOIN (
+        SELECT TRY_CONVERT(date, DATA, 103) AS data, CAST(NUM_LANCTO AS nvarchar(100)) AS comanda, SUM(TOT_PAGO) AS pago
+        FROM bd_peninsula_frest.dbo.BD_VENDAS
+        WHERE TRY_CONVERT(date, DATA, 103) >= @inicio AND TRY_CONVERT(date, DATA, 103) <= @fim
+        GROUP BY TRY_CONVERT(date, DATA, 103), CAST(NUM_LANCTO AS nvarchar(100))
+    ) v ON v.data = p.data AND v.comanda = p.comanda
+    WHERE p.copos > 0
 )
 SELECT loja, CONVERT(char(10), data, 120) AS data, comanda, valor, copos, faturamento
 FROM comandas
@@ -93,9 +112,11 @@ try {
     [void]$cmd.Parameters.Add('@inicio', [System.Data.SqlDbType]::Date)
     [void]$cmd.Parameters.Add('@fim', [System.Data.SqlDbType]::Date)
     [void]$cmd.Parameters.Add('@item', [System.Data.SqlDbType]::NVarChar, 100)
+    [void]$cmd.Parameters.Add('@item_pen', [System.Data.SqlDbType]::NVarChar, 100)
     $cmd.Parameters['@inicio'].Value = [datetime]::ParseExact($Inicio, 'yyyy-MM-dd', $null)
     $cmd.Parameters['@fim'].Value = [datetime]::ParseExact($Fim, 'yyyy-MM-dd', $null)
     $cmd.Parameters['@item'].Value = 'COPO ESPETTO ANIVER 15'
+    $cmd.Parameters['@item_pen'].Value = 'COPO NIVER ESPETTO'
     $reader = $cmd.ExecuteReader()
     $items = New-Object System.Collections.Generic.List[object]
     while ($reader.Read()) {

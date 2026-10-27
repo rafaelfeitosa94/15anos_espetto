@@ -3,13 +3,16 @@
   Retorna UMA linha com a coluna [payload] contendo um JSON compacto. Cada chamada traz só uma @parte:
     'vendas'             comandas, faturamento, comandas acima do limite e copos entregues (todas as lojas)
     'produtos_espetto'   produtos das lojas Espetto
-    'produtos_parceiros' produtos de Villa Lobos e Cabo Frio Collab
+    'produtos_parceiros' produtos de Villa Lobos, Cabo Frio Collab e Península
   As três partes são chamadas em paralelo, em blocos de 7 dias. As tabelas de origem têm índice em
   dataVenda (sql/indices_dataVenda.sql); OPTION (RECOMPILE) faz o otimizador usar as datas reais.
 
   Copos entregues: quantidade do item de venda @item ('COPO ESPETTO ANIVER 15', lançado a R$ 0) e número de
   comandas em que ele foi lançado, por loja/dia, na parte 'vendas'. Fontes: produtos do Espetto, da Mané loja 13
-  (Cabo Frio Collab) e da Zig (Villa Lobos). A Península usa outro PDV e não tem o item no banco.
+  (Cabo Frio Collab) e da Zig (Villa Lobos). Península (PDV próprio, base bd_peninsula_frest): item @item_pen.
+
+  Península: DATA em texto (dd/mm/aaaa). Comanda = NUM_LANCTO. Valor da comanda = BD_VENDAS.TOT_CUPON nos dias
+  em que a BD_VENDAS tem dados; nos outros dias, soma de BD_PRODUTOS.TOTAL da comanda.
 
   Regras (iguais às views vw_faturamento_espetto_cupom / vw_faturamento_cabofrio_collab_cupom e às views
   *_ano_anterior, para comparar 2026 x 2025 com a mesma conta):
@@ -40,6 +43,8 @@ SET NOCOUNT ON;
 DECLARE @ini datetime = @inicio, @fimx datetime = DATEADD(day, 1, CAST(@fim AS datetime));
 DECLARE @limite decimal(14, 2) = 250.00;
 DECLARE @item nvarchar(100) = N'COPO ESPETTO ANIVER 15'; -- item lançado na comanda quando o copo é entregue
+DECLARE @item_pen nvarchar(100) = N'COPO NIVER ESPETTO';    -- o mesmo item no PDV da Península
+DECLARE @pen nvarchar(150) = N'ESP PENÍNSULA';
 
 IF OBJECT_ID('tempdb..#com') IS NOT NULL DROP TABLE #com;
 IF OBJECT_ID('tempdb..#v') IS NOT NULL DROP TABLE #v;
@@ -51,6 +56,8 @@ IF OBJECT_ID('tempdb..#lj') IS NOT NULL DROP TABLE #lj;
 IF OBJECT_ID('tempdb..#pd') IS NOT NULL DROP TABLE #pd;
 IF OBJECT_ID('tempdb..#cp') IS NOT NULL DROP TABLE #cp;
 IF OBJECT_ID('tempdb..#cc') IS NOT NULL DROP TABLE #cc;
+IF OBJECT_ID('tempdb..#pp') IS NOT NULL DROP TABLE #pp;
+IF OBJECT_ID('tempdb..#pv') IS NOT NULL DROP TABLE #pv;
 
 -- valor = faturamento da comanda (consumo + serviço - cortesia); consumo = base da regra do copo
 CREATE TABLE #com (loja nvarchar(150), data date, valor decimal(16, 2), consumo decimal(16, 2));
@@ -61,6 +68,21 @@ CREATE TABLE #pg (base char(1), cod varchar(50), data date, tipo varchar(50), co
 -- copos entregues por loja/dia: cop = quantidade do item, ccop = comandas com o item
 CREATE TABLE #cp (loja nvarchar(150), data date, cop decimal(16, 3), ccop int);
 CREATE TABLE #cc (loja nvarchar(150), data date, comanda nvarchar(100), valor decimal(16, 2), copos decimal(16, 3));
+-- Península: itens (#pp) e comandas da BD_VENDAS (#pv) do período
+CREATE TABLE #pp (data date, comanda nvarchar(100), item nvarchar(300), qtd decimal(16, 3), total decimal(16, 2));
+CREATE TABLE #pv (data date, comanda nvarchar(100), valor decimal(16, 2));
+IF @parte IN ('vendas', 'produtos_parceiros')
+INSERT #pp (data, comanda, item, qtd, total)
+SELECT TRY_CONVERT(date, DATA, 103), NUM_LANCTO, UPPER(LTRIM(RTRIM(DESC_RES))), QTE, TOTAL
+FROM bd_peninsula_frest.dbo.BD_PRODUTOS
+WHERE TRY_CONVERT(date, DATA, 103) >= @inicio AND TRY_CONVERT(date, DATA, 103) <= @fim;
+IF @parte = 'vendas'
+INSERT #pv (data, comanda, valor)
+SELECT TRY_CONVERT(date, DATA, 103), NUM_LANCTO, SUM(TOT_CUPON)
+FROM bd_peninsula_frest.dbo.BD_VENDAS
+WHERE TRY_CONVERT(date, DATA, 103) >= @inicio AND TRY_CONVERT(date, DATA, 103) <= @fim
+GROUP BY TRY_CONVERT(date, DATA, 103), NUM_LANCTO;
+
 CREATE TABLE #prod (loja nvarchar(150), data date, produto nvarchar(300), qtd decimal(16, 3), valor decimal(16, 2));
 
 IF @parte = 'vendas'
@@ -127,6 +149,15 @@ WHERE DATA >= @inicio AND DATA <= @fim
 GROUP BY LOJA, DATA, COMANDAS
 OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
 
+-- Península: TOT_CUPON da BD_VENDAS; nos dias sem BD_VENDAS, soma dos produtos da comanda
+INSERT #com (loja, data, valor, consumo)
+SELECT @pen, data, valor, valor FROM #pv;
+INSERT #com (loja, data, valor, consumo)
+SELECT @pen, data, SUM(total), SUM(total)
+FROM #pp
+WHERE data NOT IN (SELECT DISTINCT data FROM #pv)
+GROUP BY data, comanda;
+
 -- Copos entregues (item @item, não cancelado)
 INSERT #cp (loja, data, cop, ccop)
 SELECT l.lojas, CAST(p.dataVenda AS date), SUM(p.quantidade),
@@ -191,6 +222,15 @@ WHERE DATA >= @inicio AND DATA <= @fim
 GROUP BY LOJA, DATA, COMANDAS
 HAVING SUM(CASE WHEN UPPER(LTRIM(RTRIM(PRODUTO))) = @item THEN QUANTIDADE ELSE 0 END) > 0
 OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
+
+-- Península: copos (item @item_pen) e comandas com copo
+INSERT #cp (loja, data, cop, ccop)
+SELECT @pen, data, SUM(qtd), COUNT(DISTINCT comanda) FROM #pp WHERE item = @item_pen GROUP BY data;
+INSERT #cc (loja, data, comanda, valor, copos)
+SELECT @pen, c.data, c.comanda, ISNULL(v.valor, t.total), c.copos
+FROM (SELECT data, comanda, SUM(qtd) AS copos FROM #pp WHERE item = @item_pen GROUP BY data, comanda) c
+JOIN (SELECT data, comanda, SUM(total) AS total FROM #pp GROUP BY data, comanda) t ON t.data = c.data AND t.comanda = c.comanda
+LEFT JOIN #pv v ON v.data = c.data AND v.comanda = c.comanda;
 END
 
 -- Vendas por loja/dia: comanda conta para o copo quando o CONSUMO (sem taxa de serviço) é maior que @limite
@@ -244,6 +284,13 @@ WHERE p.codLoja = 13 AND p.cancelado = 'N' AND p.quantidade >= 1 AND p.valUnitar
   AND p.dataVenda >= @ini AND p.dataVenda < @fimx
 GROUP BY CAST(p.dataVenda AS date), p.descricaoProduto
 OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
+
+-- Produtos Península (mesmo filtro das outras lojas: quantidade >= 1 e preço unitário > R$ 1)
+INSERT #prod (loja, data, produto, qtd, valor)
+SELECT @pen, data, item, SUM(qtd), SUM(total)
+FROM #pp
+WHERE qtd >= 1 AND total / qtd > 1
+GROUP BY data, item;
 END
 
 DELETE FROM #prod WHERE loja IS NULL OR qtd <= 0;

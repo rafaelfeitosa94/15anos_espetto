@@ -32,7 +32,7 @@ Instalação do runner, secrets e variáveis: **[docs/CONFIGURAR_RUNNER.md](docs
 | Comandas > R$ 250 | comandas com **consumo** (sem taxa de serviço) maior que R$ 250, em todas as lojas |
 | Comandas | total de comandas distintas |
 | Ticket médio | faturamento ÷ comandas |
-| Copos entregues | quantidade do item de venda **COPO ESPETTO ANIVER 15** (lançado a R$ 0) nas comandas: produtos do Espetto, da Mané loja 13 (Cabo Frio Collab) e da Zig (Villa Lobos). A Península usa PDV próprio e aparece como "PDV próprio" |
+| Copos entregues | quantidade do item de venda **COPO ESPETTO ANIVER 15** (lançado a R$ 0) nas comandas: produtos do Espetto, da Mané loja 13 (Cabo Frio Collab) e da Zig (Villa Lobos). Península (PDV próprio, base `bd_peninsula_frest`): item **COPO NIVER ESPETTO** |
 | Comandas com copo | comandas em que o item do copo foi lançado |
 | Estoque usado | copos entregues acumulados desde 15/10 até a data final do filtro, versus copos enviados à loja |
 | Recarga do banco | o Fabric recarrega as tabelas de vendas, produtos e pagamentos várias vezes ao dia; se um dia já fechado vier com bem menos comandas, copos entregues ou valor de produtos que a versão publicada, o runner espera 5 min e consulta de novo (até 3 vezes) e, se persistir, mantém a versão publicada dessas lojas/dias (vendas, copos, produtos e comandas com copo) |
@@ -93,3 +93,11 @@ node dev-server.js
 
 Clique em **Atualizar dados** no dashboard, rode o workflow manualmente no GitHub
 (*Actions → Atualizar dados → Run workflow*) ou execute `extrator\atualizar.bat` (plano B local).
+
+## Península (bd_peninsula_frest)
+
+PDV próprio, fora do Degust. `BD_PRODUTOS` (itens; DATA em texto dd/mm/aaaa; comanda = NUM_LANCTO) e `BD_VENDAS`
+(TOT_CUPON por comanda). Valor da comanda = TOT_CUPON nos dias em que a `BD_VENDAS` tem dados; nos outros dias, a
+soma de `BD_PRODUTOS.TOTAL` da comanda (em 27/10/2026 a `BD_VENDAS` ainda estava vazia). Copos = item
+**COPO NIVER ESPETTO**. No detalhamento, Faturamento = TOT_PAGO da `BD_VENDAS` ("—" enquanto ela estiver vazia).
+Sem dados de 2025 (a base começa em 02/01/2026).
