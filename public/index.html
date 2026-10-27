@@ -145,6 +145,7 @@
     <section class="card">
         <div class="card-head">
           <h2>Ranking de lojas</h2>
+          <div class="card-tools">
           <select id="rankBy" class="select" aria-label="Ordenar ranking por">
             <option value="cop">Copos entregues</option>
             <option value="ccop">Comandas com copo</option>
@@ -155,8 +156,13 @@
             <option value="com">Comandas</option>
             <option value="tm">Ticket médio</option>
           </select>
+          <button class="btn btn-ghost btn-toggle" id="rankToggle" type="button" aria-expanded="true" aria-controls="rankWrap">
+            <span class="chev" aria-hidden="true">▾</span><span id="rankToggleTxt">Ocultar tabela</span>
+          </button>
+          </div>
         </div>
-        <div class="table-wrap">
+        <div class="collapse" id="rankWrap"><div class="collapse-inner">
+        <div class="table-wrap rank-wrap">
           <table class="rank">
             <thead>
               <tr><th>#</th><th>Loja</th><th class="num" title="Item COPO ESPETTO ANIVER 15 lançado no PDV">Copos entregues</th><th class="num">Comandas c/ copo</th><th class="pct-col">Estoque usado</th><th class="num">&gt; R$250</th><th class="num" title="Contas acima de R$ 250 a alcançar na ação (planilha de premiação: média mensal jan–set/26 + % de crescimento da loja)">Meta</th><th class="pct-col" title="Contas acima de R$ 250 desde 15/10 até a data final do filtro ÷ meta">% da meta</th><th class="num">Faturamento</th><th class="num" title="Faturamento comparado ao mesmo período de 2025 (mesmas datas)">vs 2025</th><th class="num">Comandas</th><th class="num">Ticket médio</th><th class="num">Saldo copos</th></tr>
@@ -164,6 +170,7 @@
             <tbody id="rankBody"></tbody>
           </table>
         </div>
+        </div></div>
     </section>
 
     <!-- Evolução + top produtos -->

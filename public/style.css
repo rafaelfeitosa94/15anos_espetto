@@ -283,6 +283,16 @@ button, input, select { font: inherit; color: inherit; }
 
 /* ---------- ranking ---------- */
 .table-wrap { max-height: 360px; overflow: auto; margin: 0 -6px; }
+/* ranking estendido (todas as lojas, sem rolagem interna) e recolhível pelo botão "Ocultar tabela" */
+.rank-wrap { max-height: none; overflow-y: visible; }
+.card-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.btn-toggle { padding: 8px 12px; font-size: 13px; }
+.btn-toggle .chev { display: inline-block; transition: transform .25s ease; }
+.btn-toggle[aria-expanded="false"] .chev { transform: rotate(-90deg); }
+.collapse { display: grid; grid-template-rows: 1fr; transition: grid-template-rows .3s ease; }
+.collapse.fechado { grid-template-rows: 0fr; }
+.collapse-inner { min-height: 0; overflow: hidden; }
+.card:has(.collapse.fechado) .card-head { margin-bottom: 0; }
 .rank { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
 .rank th {
   position: sticky; top: 0; background: var(--surface-solid); text-align: left; font-size: 11px; text-transform: uppercase;

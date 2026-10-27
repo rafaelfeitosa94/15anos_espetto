@@ -865,6 +865,13 @@
     $('lojaAll').addEventListener('click', () => { DATA.lojas.forEach(l => state.lojas.add(l.i)); renderLojaList(); render(); });
     $('lojaNone').addEventListener('click', () => { state.lojas.clear(); state.focus = null; renderLojaList(); render(); });
     $('rankBy').addEventListener('change', e => { state.rankBy = e.target.value; render(); });
+    // ranking começa sempre estendido; o botão oculta/mostra a tabela
+    $('rankToggle').addEventListener('click', () => {
+      const aberto = $('rankToggle').getAttribute('aria-expanded') === 'true';
+      $('rankToggle').setAttribute('aria-expanded', String(!aberto));
+      $('rankToggleTxt').textContent = aberto ? 'Mostrar tabela' : 'Ocultar tabela';
+      $('rankWrap').classList.toggle('fechado', aberto);
+    });
     $('evoSeg').addEventListener('click', e => segClick(e, 'evo'));
     $('prodSeg').addEventListener('click', e => segClick(e, 'prod'));
     $('prodAnoSeg').addEventListener('click', e => segClick(e, 'prodAno'));
