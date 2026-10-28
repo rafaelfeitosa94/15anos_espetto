@@ -149,6 +149,7 @@
           <select id="rankBy" class="select" aria-label="Ordenar ranking por">
             <option value="cop">Copos entregues</option>
             <option value="ccop">Comandas com copo</option>
+            <option value="chopp">Chopp 15 anos</option>
             <option value="pct">% do estoque de copos</option>
             <option value="c250">Comandas &gt; R$ 250</option>
             <option value="meta">% da meta</option>
@@ -165,7 +166,7 @@
         <div class="table-wrap rank-wrap">
           <table class="rank">
             <thead>
-              <tr><th>#</th><th>Loja</th><th class="num" title="Item COPO ESPETTO ANIVER 15 lançado no PDV">Copos entregues</th><th class="num">Comandas c/ copo</th><th class="pct-col">Estoque usado</th><th class="num">&gt; R$250</th><th class="num" title="Contas acima de R$ 250 a alcançar na ação (planilha de premiação: média mensal jan–set/26 + % de crescimento da loja)">Meta</th><th class="pct-col" title="Contas acima de R$ 250 desde 15/10 até a data final do filtro ÷ meta">% da meta</th><th class="num">Faturamento</th><th class="num" title="Faturamento comparado ao mesmo período de 2025 (mesmas datas)">vs 2025</th><th class="num">Comandas</th><th class="num">Ticket médio</th><th class="num">Saldo copos</th></tr>
+              <tr><th>#</th><th>Loja</th><th class="num" title="Item COPO ESPETTO ANIVER 15 lançado no PDV">Copos entregues</th><th class="num">Comandas c/ copo</th><th class="num" title="Quantidade vendida de CHOPP P/ COPO 15 ANOS ESPETTO (Villa Lobos: CHOPP P/COPO 15ANOS) no período do filtro">Chopp 15 anos</th><th class="pct-col">Estoque usado</th><th class="num">&gt; R$250</th><th class="num" title="Contas acima de R$ 250 a alcançar na ação (planilha de premiação: média mensal jan–set/26 + % de crescimento da loja)">Meta</th><th class="pct-col" title="Contas acima de R$ 250 desde 15/10 até a data final do filtro ÷ meta">% da meta</th><th class="num">Faturamento</th><th class="num" title="Faturamento comparado ao mesmo período de 2025 (mesmas datas)">vs 2025</th><th class="num">Comandas</th><th class="num">Ticket médio</th><th class="num">Saldo copos</th></tr>
             </thead>
             <tbody id="rankBody"></tbody>
           </table>
@@ -250,12 +251,12 @@
   <div class="modal-backdrop" data-close="true"></div>
   <section class="modal-card">
     <header class="modal-head">
-      <div><span class="muted small">DETALHAMENTO</span><h2 id="coposModalTitle">Comandas com copo</h2><p id="coposModalSummary" class="muted small"></p><p id="coposModalChopp" class="small chopp-resumo"></p></div>
+      <div><span class="muted small">DETALHAMENTO</span><h2 id="coposModalTitle">Comandas com copo</h2><p id="coposModalSummary" class="muted small"></p></div>
       <button class="icon-btn" id="coposModalClose" aria-label="Fechar detalhamento">✕</button>
     </header>
     <div class="modal-legend"><span><i class="cup-orange"></i> acima de R$ 250</span><span><i class="cup-red"></i> a partir de R$ 500</span></div>
     <div class="modal-table-wrap">
-      <table class="rank modal-table"><thead><tr><th>Data</th><th>Loja</th><th>Comanda</th><th class="num">Copos</th><th class="num" title="Soma dos produtos da comanda">Valor do consumo</th><th class="num" title="Soma dos pagamentos da comanda (BD_PAGAMENTOS_V2, não cancelados)">Faturamento</th><th class="num" title="CHOPP P/ COPO 15 ANOS ESPETTO (Villa Lobos: CHOPP P/COPO 15ANOS)">Qtd. chopp 15 anos</th><th class="num">Valor chopp 15 anos</th></tr></thead><tbody id="coposModalRows"></tbody></table>
+      <table class="rank modal-table"><thead><tr><th>Data</th><th>Loja</th><th>Comanda</th><th class="num">Copos</th><th class="num" title="Soma dos produtos da comanda">Valor do consumo</th><th class="num" title="Soma dos pagamentos da comanda (BD_PAGAMENTOS_V2, não cancelados)">Faturamento</th></tr></thead><tbody id="coposModalRows"></tbody></table>
       <p id="coposModalEmpty" class="empty-state hidden">Nenhuma comanda com copo no período e nas lojas selecionadas.</p>
     </div>
   </section>

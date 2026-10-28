@@ -309,10 +309,12 @@
   }
 
   /* ---------------- agregação ---------------- */
+  // item de chopp vendido no copo comemorativo: Degust (Espetto/Mané) e Zig (Villa Lobos)
+  const CHOPP_15 = new Set(['CHOPP P/ COPO 15 ANOS ESPETTO', 'CHOPP P/COPO 15ANOS']);
   function aggregate() {
     const dias = DATA.dias;
     const inDay = dias.map(d => d >= state.ini && d <= state.fim);
-    const perLoja = DATA.lojas.map(l => ({ l, fat: 0, com: 0, c250: 0, fat250: 0, cop: 0, ccop: 0 }));
+    const perLoja = DATA.lojas.map(l => ({ l, fat: 0, com: 0, c250: 0, fat250: 0, cop: 0, ccop: 0, chopp: 0 }));
     const perDay = dias.map(d => ({ d, fat: 0, com: 0, c250: 0, cop: 0 }));
     // vendas: [loja, dia, faturamento, comandas, comandas>limite, faturamento>limite,
     //          copos entregues (item COPO ESPETTO ANIVER 15), comandas com copo]
@@ -326,12 +328,14 @@
     }
     // produtos: [loja, dia, produto, qtd, valor]
     const prodMap = new Map();
+    const choppIdx = new Set(DATA.produtos.map((n, i) => CHOPP_15.has(n) ? i : -1).filter(i => i >= 0));
     for (const p of DATA.prod) {
       const [li, di, pi, qt, vl] = p;
       if (!inDay[di] || !state.lojas.has(li)) continue;
       const cur = prodMap.get(pi) || { q: 0, v: 0 };
       cur.q += qt; cur.v += vl;
       prodMap.set(pi, cur);
+      if (choppIdx.has(pi)) perLoja[li].chopp += qt; // chopp vendido no copo comemorativo
     }
     const tot = perLoja.reduce((a, p) => {
       if (!state.lojas.has(p.l.i)) return a;
@@ -525,8 +529,6 @@
     $('kTmAA').innerHTML = aa ? linhaAA(tm, aa.tot.tm, brl, aa) : '';
   }
 
-  // nomes do item de chopp vendido no copo comemorativo (Degust e Zig)
-  const CHOPP_15 = new Set(['CHOPP P/ COPO 15 ANOS ESPETTO', 'CHOPP P/COPO 15ANOS']);
   let focoRetornoCopos = null;
   function abrirDetalheCopos(lojaId = null, origem = null) {
     const lojas = new Map(DATA.lojas.map((l, i) => [i, l]));
@@ -542,23 +544,11 @@
     const totValor = rows.reduce((a, r) => a + r[3], 0);
     const totFat = rows.reduce((a, r) => a + (r[5] || 0), 0);
     $('coposModalSummary').textContent += ` · consumo ${brl(totValor)} · faturamento ${brl(totFat)}`;
-    // venda do chopp do copo 15 anos (CHOPP P/ COPO 15 ANOS ESPETTO / CHOPP P/COPO 15ANOS na Zig) em TODAS as
-    // comandas do período e lojas filtradas (produtos), e só nas comandas com copo (colunas da tabela)
-    const choppIdx = new Set(DATA.produtos.map((n, i) => CHOPP_15.has(n) ? i : -1).filter(i => i >= 0));
-    let chQ = 0, chV = 0;
-    for (const [li, di, pi, q, v] of DATA.prod) {
-      if (!choppIdx.has(pi) || !lojasFiltro.has(li)) continue;
-      const d = dias.get(di);
-      if (d >= state.ini && d <= state.fim) { chQ += q; chV += v; }
-    }
-    const chQc = rows.reduce((a, r) => a + (r[6] || 0), 0), chVc = rows.reduce((a, r) => a + (r[7] || 0), 0);
-    $('coposModalChopp').textContent = `Chopp 15 anos vendido: ${int(chQ)} un · ${brl(chV)} no período` +
-      ` (${int(chQc)} un · ${brl(chVc)} nas comandas com copo)`;
-    $('coposModalRows').innerHTML = rows.map(([li, di, numero, valor, copos, fat = null, chq = 0, chv = 0]) => {
+    $('coposModalRows').innerHTML = rows.map(([li, di, numero, valor, copos, fat = null]) => {
       const day = dias.get(di) || '';
       const cls = valor >= 500 ? 'cup-value-red' : valor > 250 ? 'cup-value-orange' : '';
       const data = day ? `${day.slice(8,10)}/${day.slice(5,7)}/${day.slice(0,4)}` : '—';
-      return `<tr><td>${data}</td><td>${escape(lojas.get(li)?.nome || lojas.get(li)?.codigo || '—')}</td><td>${escape(numero)}</td><td class="num">${int(copos)}</td><td class="num ${cls}"><b>${brl(valor)}</b></td><td class="num">${fat == null ? '—' : brl(fat)}</td><td class="num">${chq ? int(chq) : '—'}</td><td class="num">${chq ? brl(chv) : '—'}</td></tr>`;
+      return `<tr><td>${data}</td><td>${escape(lojas.get(li)?.nome || lojas.get(li)?.codigo || '—')}</td><td>${escape(numero)}</td><td class="num">${int(copos)}</td><td class="num ${cls}"><b>${brl(valor)}</b></td><td class="num">${fat == null ? '—' : brl(fat)}</td></tr>`;
     }).join('');
     $('coposModalEmpty').classList.toggle('hidden', rows.length > 0);
     focoRetornoCopos = origem || $('kCoposDrill');
@@ -587,6 +577,7 @@
         <td class="loja"></td>
         <td class="num">${semItem(p) || `<button type="button" class="rank-copos-button" aria-label="Ver comandas com copo de ${p.l.nome}">${int(p.cop)}</button>`}</td>
         <td class="num">${semItem(p) ? '—' : int(p.ccop)}</td>
+        <td class="num">${int(p.chopp)}</td>
         <td><div class="pct-cell"><div class="mini-bar"><div style="width:${Math.min(100, p.pct * 100)}%;background:${color}"></div></div><span>${int(p.usados)}/${int(p.l.copos)}</span></div></td>
         <td class="num">${int(p.c250)}</td>
         <td class="num">${p.l.meta ? int(Math.round(p.l.meta)) : '—'}</td>
@@ -603,7 +594,7 @@
       if (coposBtn) coposBtn.addEventListener('click', e => { e.stopPropagation(); abrirDetalheCopos(p.l.i, coposBtn); });
       body.appendChild(tr);
     });
-    if (!rows.length) body.innerHTML = '<tr><td colspan="13" class="muted">Nenhuma loja selecionada</td></tr>';
+    if (!rows.length) body.innerHTML = '<tr><td colspan="14" class="muted">Nenhuma loja selecionada</td></tr>';
   }
 
   // variação do faturamento da loja vs 2025 (coluna do ranking)

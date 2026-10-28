@@ -102,6 +102,5 @@ soma de `BD_PRODUTOS.TOTAL` da comanda. 2025 (comparação): `BD_VENDAS` de 15/1
 **COPO NIVER ESPETTO**. No detalhamento, Faturamento = TOT_PAGO da `BD_VENDAS`.
 Sem dados de 2025 (a base começa em 02/01/2026).
 
-Detalhamento de copos: também mostra a venda do chopp do copo comemorativo, **CHOPP P/ COPO 15 ANOS ESPETTO**
-(Degust) e **CHOPP P/COPO 15ANOS** (Zig, Villa Lobos): quantidade e valor por comanda com copo, e o total vendido no
-período (todas as comandas) no topo.
+Ranking de lojas: coluna **Chopp 15 anos** = quantidade vendida de **CHOPP P/ COPO 15 ANOS ESPETTO** (Degust) e
+**CHOPP P/COPO 15ANOS** (Zig, Villa Lobos) no período do filtro, a partir dos produtos.
