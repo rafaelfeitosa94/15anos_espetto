@@ -5,7 +5,7 @@
   "cidade": "Alphavile - SP",
   "uf": "SP",
   "endereco": "Calçada das Orquídeas, 98 – Centro Comercial Alphaville",
-  "copos": 220,
+  "copos": 410,
   "lat": -23.4972,
   "lng": -46.8512,
   "meta": 865.28
@@ -16,7 +16,7 @@
   "cidade": "Rio de Janeiro - RJ",
   "uf": "RJ",
   "endereco": "Estr. Intendente Magalhães, 610 – C/D",
-  "copos": 50,
+  "copos": 150,
   "lat": -22.8778,
   "lng": -43.3624,
   "meta": 511.74
@@ -27,7 +27,7 @@
   "cidade": "Rio de Janeiro - RJ",
   "uf": "RJ",
   "endereco": "Av. das Américas, 5000 – U 114",
-  "copos": 120,
+  "copos": 294,
   "lat": -23.0007,
   "lng": -43.391,
   "meta": 493.08
@@ -38,7 +38,7 @@
   "cidade": "Rio de Janeiro - RJ",
   "uf": "RJ",
   "endereco": "Rua Olegário Maciel, 135 – U D",
-  "copos": 100,
+  "copos": 200,
   "lat": -23.0118,
   "lng": -43.305,
   "meta": 581.73
@@ -49,7 +49,7 @@
   "cidade": "Rio de Janeiro - RJ",
   "uf": "RJ",
   "endereco": "Rua Edson Sá, 18 – Loja C",
-  "copos": 100,
+  "copos": 200,
   "lat": -23.0189,
   "lng": -43.4608,
   "meta": 387.36
@@ -60,7 +60,7 @@
   "cidade": "Rio de Janeiro - RJ",
   "uf": "RJ",
   "endereco": "Estr. do Moinho, 1200 – 108 F",
-  "copos": 60,
+  "copos": 162,
   "lat": -22.9239,
   "lng": -43.5684,
   "meta": 360.67
@@ -71,7 +71,7 @@
   "cidade": "Rio de Janeiro - RJ",
   "uf": "RJ",
   "endereco": "Av. Marechal Fontenelle, 3545 – Lojas 202, 203, 204, 205 e 206",
-  "copos": 40,
+  "copos": 90,
   "lat": -22.8851,
   "lng": -43.3897,
   "meta": 284.56
@@ -93,7 +93,7 @@
   "cidade": "São Paulo - SP",
   "uf": "SP",
   "endereco": "R. Bela Cintra, 1579",
-  "copos": 60,
+  "copos": 140,
   "lat": -23.5572,
   "lng": -46.6628,
   "meta": 245.42
@@ -115,7 +115,7 @@
   "cidade": "Rio de Janeiro - RJ",
   "uf": "RJ",
   "endereco": "Av. Brás de Pina, 2097 A",
-  "copos": 40,
+  "copos": 110,
   "lat": -22.8395,
   "lng": -43.2969,
   "meta": 181.47
@@ -126,7 +126,7 @@
   "cidade": "Americana - SP",
   "uf": "SP",
   "endereco": "Av. Nossa Senhora de Fátima, 2370 – Loja L001",
-  "copos": 40,
+  "copos": 80,
   "lat": -22.7427,
   "lng": -47.3092,
   "meta": 181.6
@@ -137,7 +137,7 @@
   "cidade": "Rio das Ostras - RJ",
   "uf": "RJ",
   "endereco": "Estr. Prof. Leandro Faria Sarzedas, 1300 – Loja 1118 (Shopping Plaza)",
-  "copos": 50,
+  "copos": 70,
   "lat": -22.4951,
   "lng": -41.9229,
   "meta": 227.5
@@ -148,7 +148,7 @@
   "cidade": "Rio de Janeiro - RJ",
   "uf": "RJ",
   "endereco": "Estr. São João de Meriti, 111 – U 428",
-  "copos": 60,
+  "copos": 160,
   "lat": -22.7961,
   "lng": -43.3531,
   "meta": 253.61
@@ -159,7 +159,7 @@
   "cidade": "Goiânia - GO",
   "uf": "GO",
   "endereco": "Av. São João, 161",
-  "copos": 50,
+  "copos": 100,
   "lat": -16.7106,
   "lng": -49.2419,
   "meta": 176.39
@@ -170,7 +170,7 @@
   "cidade": "Duque de Caxias - RJ",
   "uf": "RJ",
   "endereco": "Rodovia Washington Luiz, 2895 – U 303 E/F",
-  "copos": 40,
+  "copos": 80,
   "lat": -22.7977,
   "lng": -43.2927,
   "meta": 129.45
@@ -181,7 +181,7 @@
   "cidade": "Rio de Janeiro - RJ",
   "uf": "RJ",
   "endereco": "Av. das Américas, 11.889 – U F",
-  "copos": 40,
+  "copos": 110,
   "lat": -23.0017,
   "lng": -43.4135,
   "meta": 162.08
@@ -192,7 +192,7 @@
   "cidade": "São Paulo - SP",
   "uf": "SP",
   "endereco": "Rua Domingos Agostim, 91",
-  "copos": 40,
+  "copos": 60,
   "lat": -23.5421,
   "lng": -46.5761,
   "meta": 128.12
@@ -203,7 +203,7 @@
   "cidade": "Andradina - SP",
   "uf": "SP",
   "endereco": "Rua Paes Leme, 1653",
-  "copos": 40,
+  "copos": 80,
   "lat": -20.8904,
   "lng": -51.3725,
   "meta": 133.9
@@ -214,7 +214,7 @@
   "cidade": "Guarulhos - SP",
   "uf": "SP",
   "endereco": "Av. Tiradentes, 92",
-  "copos": 40,
+  "copos": 70,
   "lat": -23.4641,
   "lng": -46.5284,
   "meta": 54.5
@@ -225,7 +225,7 @@
   "cidade": "Rio de Janeiro - RJ",
   "uf": "RJ",
   "endereco": "Av. Ayrton Senna, 2541 – Bl. C/F, Lojas 167 e 168",
-  "copos": 30,
+  "copos": 50,
   "lat": -22.9877,
   "lng": -43.3654,
   "meta": 91.5
@@ -247,7 +247,7 @@
   "cidade": "São Paulo - SP",
   "uf": "SP",
   "endereco": "Rua Américo Brasiliense, 1795 – U A",
-  "copos": 25,
+  "copos": 45,
   "lat": -23.6327,
   "lng": -46.6998,
   "meta": 70.5
@@ -258,7 +258,7 @@
   "cidade": "São Paulo - SP",
   "uf": "SP",
   "endereco": "Rua Pedroso, 258",
-  "copos": 25,
+  "copos": 45,
   "lat": -23.5623,
   "lng": -46.6419,
   "meta": 67.65
@@ -313,7 +313,7 @@
   "cidade": "São Paulo - SP",
   "uf": "SP",
   "endereco": "Av. Professor Fonseca Rodrigues, 2001 – Quiosque QR-4",
-  "copos": 150,
+  "copos": 250,
   "lat": -23.5405,
   "lng": -46.7333,
   "meta": 485
@@ -324,7 +324,7 @@
   "cidade": "Rio de Janeiro - RJ",
   "uf": "RJ",
   "endereco": "Av. Flamboyants da Península, 855 – LJ 112",
-  "copos": 100,
+  "copos": 150,
   "lat": -22.9897,
   "lng": -43.3513,
   "meta": 289.33
