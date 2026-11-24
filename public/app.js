@@ -309,8 +309,8 @@
   }
 
   /* ---------------- agregação ---------------- */
-  // item de chopp vendido no copo comemorativo: Degust (Espetto/Mané) e Zig (Villa Lobos)
-  const CHOPP_15 = new Set(['CHOPP P/ COPO 15 ANOS ESPETTO', 'CHOPP P/COPO 15ANOS']);
+  // item de chopp vendido no copo comemorativo: Degust (Espetto/Mané), Zig (Villa Lobos) e PDV da Península
+  const CHOPP_15 = new Set(['CHOPP P/ COPO 15 ANOS ESPETTO', 'CHOPP P/COPO 15ANOS', 'REFIL CHOP AMSTEL 500ML NIVER']);
   function aggregate() {
     const dias = DATA.dias;
     const inDay = dias.map(d => d >= state.ini && d <= state.fim);

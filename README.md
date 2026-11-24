@@ -102,5 +102,5 @@ soma de `BD_PRODUTOS.TOTAL` da comanda. 2025 (comparação): `BD_VENDAS` de 15/1
 **COPO NIVER ESPETTO**. No detalhamento, Faturamento = TOT_PAGO da `BD_VENDAS`.
 Sem dados de 2025 (a base começa em 02/01/2026).
 
-Ranking de lojas: coluna **Chopp 15 anos** = quantidade vendida de **CHOPP P/ COPO 15 ANOS ESPETTO** (Degust) e
-**CHOPP P/COPO 15ANOS** (Zig, Villa Lobos) no período do filtro, a partir dos produtos.
+Ranking de lojas: coluna **Chopp 15 anos** = quantidade vendida de **CHOPP P/ COPO 15 ANOS ESPETTO** (Degust),
+**CHOPP P/COPO 15ANOS** (Zig, Villa Lobos) e **REFIL CHOP AMSTEL 500ML NIVER** (PDV da Península) no período do filtro, a partir dos produtos.
