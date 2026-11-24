@@ -285,11 +285,12 @@ WHERE p.codLoja = 13 AND p.cancelado = 'N' AND p.quantidade >= 1 AND p.valUnitar
 GROUP BY CAST(p.dataVenda AS date), p.descricaoProduto
 OPTION (MAX_GRANT_PERCENT = 5, RECOMPILE);
 
--- Produtos Península (mesmo filtro das outras lojas: quantidade >= 1 e preço unitário > R$ 1)
+-- Produtos Península (mesmo filtro das outras lojas: quantidade >= 1 e preço unitário > R$ 1), exceto o chopp
+-- do copo comemorativo, lançado a R$ 0 no PDV da loja: entra sempre (coluna Chopp 15 anos do ranking)
 INSERT #prod (loja, data, produto, qtd, valor)
 SELECT @pen, data, item, SUM(qtd), SUM(total)
 FROM #pp
-WHERE qtd >= 1 AND total / qtd > 1
+WHERE qtd >= 1 AND (total / qtd > 1 OR item = N'REFIL CHOP AMSTEL 500ML NIVER')
 GROUP BY data, item;
 END
 
